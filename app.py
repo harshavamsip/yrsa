@@ -149,7 +149,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY ="AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"  
+YOUTUBE_API_KEY ="AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM" # Replace with your YouTube Data API key
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -302,4 +302,4 @@ if st.sidebar.button("Search"):
                     st.write(categorized_comments[selected_sentiment][:5])
                 st.subheader("Word Cloud")
                 word_cloud_image = generate_word_cloud_image(comments)
-                st.image(word_cloud_image)
+                st.image(word_cloud_image, use_column_width=True)
