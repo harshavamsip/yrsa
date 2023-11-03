@@ -149,7 +149,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
+YOUTUBE_API_KEY = "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM" # Replace with your YouTube Data API key
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -249,6 +249,27 @@ def generate_word_cloud(comments):
     plt.axis('off')
     st.pyplot()
 
+# Function to generate a word cloud image
+def generate_word_cloud_image(comments):
+    all_comments = ' '.join(comments)
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    img_buf = plt_to_base64(plt)
+    return img_buf
+
+# Function to convert Matplotlib plot to base64 image
+def plt_to_base64(plt):
+    import base64
+    from io import BytesIO
+
+    img_buf = BytesIO()
+    plt.savefig(img_buf, format="png", bbox_inches="tight")
+    img_buf.seek(0)
+    img_data = base64.b64encode(img_buf.read()).decode("utf-8")
+    return img_data
+
 # Streamlit web app
 st.set_page_config(
     page_title="YouTube Video Analyzer",
@@ -281,4 +302,11 @@ if st.sidebar.button("Search"):
                         st.write(comment)
                 st.subheader("Word Cloud")
                 generate_word_cloud(comments)
-                st.write(f"Watch Video: [{video[0]}]({video[1]})")
+                st.image(generate_word_cloud_image(comments), use_column_width=True)
+
+# User interface for sentiment analysis categorization
+st.subheader("Sentiment Analysis Categorization")
+selected_sentiment = st.selectbox("Select Sentiment Category", list(categorized_comments.keys()))
+if selected_sentiment != "Neutral":
+    st.write("Sample comments for the selected category:")
+    st.write(categorized_comments[selected_sentiment][:5])
