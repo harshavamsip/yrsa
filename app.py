@@ -149,7 +149,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY =  "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
+YOUTUBE_API_KEY = "YOUR_YOUTUBE_API_KEY"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -269,7 +269,7 @@ if st.sidebar.button("Search"):
             st.write(f"**{video[0]}**")
             st.write(f"Published at: {video[4]}")
             st.write(f"Likes: {video[5]}, Views: {video[6]}")
-            st.write(f"Watch Video: [{video[0]}]({video[1]})}")
+            st.write(f"Watch Video: [{video[0]}]({video[1]})]")
             if st.button(f"Analyze {video[0]}"):
                 comments = get_video_comments(video[2])  # Pass video ID
                 categorized_comments = analyze_and_categorize_comments(comments)
@@ -281,4 +281,4 @@ if st.sidebar.button("Search"):
                         st.write(comment)
                 st.subheader("Word Cloud")
                 generate_word_cloud(comments)
-                st.write(f"Watch Video: [{video[0]}]({video[1]})")
+                st.write(f"Watch Video: [{video[0}]({video[1]})")
