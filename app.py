@@ -191,8 +191,7 @@ def search_and_recommend_videos(query, max_results=10):
     return video_details
 
 # Function to fetch video comments using the video URL
-def get_video_comments(video_url):
-    video_id = video_url.split("v=")[1]
+def get_video_comments(video_id):
     comments = []
     results = youtube.commentThreads().list(
         part="snippet",
@@ -242,7 +241,7 @@ def analyze_and_categorize_comments(comments):
 
 # Function to generate a word cloud from comments
 def generate_word_cloud(comments):
-    all_comments = ' '.join(comments)
+    all comments = ' '.join(comments)
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
@@ -271,8 +270,8 @@ if st.sidebar.button("Search"):
             st.write(f"Likes: {video[5]}, Views: {video[6]}")
             st.write(f"Watch Video: [{video[0]}]({video[1]})")
             if st.button(f"Analyze {video[0]}"):
-                selected_video_url = video[1]
-                comments = get_video_comments(selected_video_url)
+                selected_video_id = video[2]
+                comments = get_video_comments(selected_video_id)
                 st.subheader("Sentiment Analysis")
                 categorized_comments = analyze_and_categorize_comments(comments)
                 selected_sentiment = st.selectbox("Select Sentiment Category", list(categorized_comments.keys()))
@@ -281,4 +280,5 @@ if st.sidebar.button("Search"):
                 st.subheader("Word Cloud")
                 generate_word_cloud(comments)
                 st.write("Word Cloud for the selected video:")
+
 
