@@ -270,7 +270,7 @@ if st.sidebar.button("Search"):
             st.write(f"**{video[0]}**")
             st.write(f"Published at: {video[4]}")
             st.write(f"Likes: {video[5]}, Views: {video[6]}")
-            st.write(f"Watch Video: [{video[0}]({video[1]})]")
+            st.write(f"Watch Video: [{video[0]}]({video[1]})")
             if st.button(f"Analyze {video[0]}"):
                 selected_video_url = video[1]
                 comments = get_video_comments(selected_video_url)
