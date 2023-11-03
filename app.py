@@ -125,7 +125,7 @@ if st.sidebar.button("Search"):
             st.write(f"**{video[0]}**")
             st.write(f"Published at: {video[4]}")
             st.write(f"Likes: {video[5]}, Views: {video[6]}")
-            st.write(f"Watch Video: [{video[0}]({video[1]})]")
+            st.write(f"Watch Video: [{video[0}]({video[1]})")
             if st.button(f"Analyze {video[0]}"):
                 selected_video_id = video[2]
                 comments = get_video_comments(selected_video_id)
@@ -138,4 +138,4 @@ if st.sidebar.button("Search"):
                         st.write(comment)
                 st.subheader("Word Cloud")
                 generate_word_cloud(comments)
-                st.write(f"Watch Video: [Watch the video](https://www.youtube.com/watch?v={selected_video_id})")
+                st.markdown(f"Watch Video: [Watch the video]({video[1]})")
