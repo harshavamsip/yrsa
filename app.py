@@ -241,12 +241,13 @@ def analyze_and_categorize_comments(comments):
 
 # Function to generate a word cloud from comments
 def generate_word_cloud(comments):
-    all comments = ' '.join(comments)
+    all_comments = ' '.join(comments)
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
     st.pyplot()
+
 
 # Streamlit web app
 st.set_page_config(
