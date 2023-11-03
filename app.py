@@ -149,7 +149,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY ="AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
+YOUTUBE_API_KEY =  "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -191,9 +191,8 @@ def search_and_recommend_videos(query, max_results=10):
 
     return video_details
 
-# Function to fetch video comments using the video URL
-def get_video_comments(video_url):
-    video_id = video_url.split("v=")[1]
+# Function to fetch video comments
+def get_video_comments(video_id):
     comments = []
     results = youtube.commentThreads().list(
         part="snippet",
@@ -270,10 +269,9 @@ if st.sidebar.button("Search"):
             st.write(f"**{video[0]}**")
             st.write(f"Published at: {video[4]}")
             st.write(f"Likes: {video[5]}, Views: {video[6]}")
-            st.write(f"Watch Video: [{video[0]}]({video[1]})")
+            st.write(f"Watch Video: [{video[0]}]({video[1]})}")
             if st.button(f"Analyze {video[0]}"):
-                selected_video_url = video[1]
-                comments = get_video_comments(selected_video_url)
+                comments = get_video_comments(video[2])  # Pass video ID
                 categorized_comments = analyze_and_categorize_comments(comments)
                 st.write(f"Video ID: {video[2]}")
                 st.subheader("Sentiment Analysis")
@@ -283,4 +281,4 @@ if st.sidebar.button("Search"):
                         st.write(comment)
                 st.subheader("Word Cloud")
                 generate_word_cloud(comments)
-                st.write(f"Watch Video: [{video[0]}]({selected_video_url})")
+                st.write(f"Watch Video: [{video[0]}]({video[1]})")
