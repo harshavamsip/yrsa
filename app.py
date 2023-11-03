@@ -148,7 +148,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
+YOUTUBE_API_KEY ="AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -273,14 +273,12 @@ if st.sidebar.button("Search"):
             if st.button(f"Analyze {video[0]}"):
                 selected_video_url = video[1]
                 comments = get_video_comments(selected_video_url)
-                st.write(f"Video URL: {selected_video_url}")
                 st.subheader("Sentiment Analysis")
                 categorized_comments = analyze_and_categorize_comments(comments)
                 selected_sentiment = st.selectbox("Select Sentiment Category", list(categorized_comments.keys()))
-                if selected_sentiment != "Neutral":
-                    st.write(f"{selected_sentiment} comments:")
-                    for comment in categorized_comments[selected_sentiment][:5]:
-                        st.write(comment)
+                st.write("Selected Sentiment Category:", selected_sentiment)
+                st.write(categorized_comments[selected_sentiment])
                 st.subheader("Word Cloud")
                 generate_word_cloud(comments)
                 st.write("Word Cloud for the selected video:")
+
