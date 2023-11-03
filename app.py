@@ -141,7 +141,6 @@
 #                 st.markdown(f"Watch Video: [Watch the video]({video[1]})")
 
 
-
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
@@ -149,7 +148,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY ="AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM" # Replace with your YouTube Data API key
+YOUTUBE_API_KEY = "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -191,8 +190,9 @@ def search_and_recommend_videos(query, max_results=10):
 
     return video_details
 
-# Function to fetch video comments
-def get_video_comments(video_id):
+# Function to fetch video comments using the video URL
+def get_video_comments(video_url):
+    video_id = video_url.split("v=")[1]
     comments = []
     results = youtube.commentThreads().list(
         part="snippet",
@@ -249,27 +249,6 @@ def generate_word_cloud(comments):
     plt.axis('off')
     st.pyplot()
 
-# Function to generate a word cloud image
-def generate_word_cloud_image(comments):
-    all_comments = ' '.join(comments)
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    img_buf = plt_to_base64(plt)
-    return img_buf
-
-# Function to convert Matplotlib plot to base64 image
-def plt_to_base64(plt):
-    import base64
-    from io import BytesIO
-
-    img_buf = BytesIO()
-    plt.savefig(img_buf, format="png", bbox_inches="tight")
-    img_buf.seek(0)
-    img_data = base64.b64encode(img_buf.read()).decode("utf-8")
-    return img_data
-
 # Streamlit web app
 st.set_page_config(
     page_title="YouTube Video Analyzer",
@@ -292,14 +271,16 @@ if st.sidebar.button("Search"):
             st.write(f"Likes: {video[5]}, Views: {video[6]}")
             st.write(f"Watch Video: [{video[0]}]({video[1]})")
             if st.button(f"Analyze {video[0]}"):
-                comments = get_video_comments(video[2])  # Pass video ID
-                st.write(f"Video ID: {video[2]}")
+                selected_video_url = video[1]
+                comments = get_video_comments(selected_video_url)
+                st.write(f"Video URL: {selected_video_url}")
                 st.subheader("Sentiment Analysis")
                 categorized_comments = analyze_and_categorize_comments(comments)
                 selected_sentiment = st.selectbox("Select Sentiment Category", list(categorized_comments.keys()))
                 if selected_sentiment != "Neutral":
-                    st.write("Sample comments for the selected category:")
-                    st.write(categorized_comments[selected_sentiment][:5])
+                    st.write(f"{selected_sentiment} comments:")
+                    for comment in categorized_comments[selected_sentiment][:5]:
+                        st.write(comment)
                 st.subheader("Word Cloud")
-                word_cloud_image = generate_word_cloud_image(comments)
-                st.image(word_cloud_image, use_column_width=True)
+                generate_word_cloud(comments)
+                st.write("Word Cloud for the selected video:")
