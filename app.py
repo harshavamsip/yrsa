@@ -149,7 +149,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
+YOUTUBE_API_KEY ="AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -245,7 +245,7 @@ def analyze_and_categorize_comments(comments):
 def generate_word_cloud(comments):
     all_comments = ' '.join(comments)
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
-    st.pyplot(plt.figure(figsize=(10, 5)))
+    plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
     st.pyplot()
@@ -270,7 +270,7 @@ if st.sidebar.button("Search"):
             st.write(f"**{video[0]}**")
             st.write(f"Published at: {video[4]}")
             st.write(f"Likes: {video[5]}, Views: {video[6]}")
-            st.write(f"Watch Video: [{video[0]}]({video[1]})")
+            st.write(f"Watch Video: [{video[0}]({video[1]})]")
             if st.button(f"Analyze {video[0]}"):
                 selected_video_url = video[1]
                 comments = get_video_comments(selected_video_url)
@@ -283,5 +283,4 @@ if st.sidebar.button("Search"):
                         st.write(comment)
                 st.subheader("Word Cloud")
                 generate_word_cloud(comments)
-                st.write(f"Watch Video: [Watch the video]({selected_video_url})")
-
+                st.write(f"Watch Video: [{video[0}]({selected_video_url})")
