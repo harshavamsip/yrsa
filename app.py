@@ -283,4 +283,4 @@ if st.sidebar.button("Search"):
                         st.write(comment)
                 st.subheader("Word Cloud")
                 generate_word_cloud(comments)
-                st.write(f"Watch Video: [{video[0}]({selected_video_url})")
+                st.write(f"Watch Video: [{video[0]}]({selected_video_url})")
