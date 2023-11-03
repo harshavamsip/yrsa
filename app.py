@@ -289,7 +289,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
+YOUTUBE_API_KEY ="AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -313,26 +313,13 @@ def search_and_recommend_videos(query, max_results=10):
 
         link = f"https://www.youtube.com/watch?v={video_id}"
 
-        # Use a separate request to get video statistics
-        video_statistics = youtube.videos().list(
-            part="statistics",
-            id=video_id
-        ).execute()
-
-        likes = 0
-        views = 0
-
-        if "items" in video_statistics:
-            statistics = video_statistics["items"][0]["statistics"]
-            likes = int(statistics.get("likeCount", 0))
-            views = int(statistics.get("viewCount", 0))
-
-        video_details.append((title, link, video_id, description, published_at, likes, views))
+        video_details.append((title, link, video_id, description, published_at))
 
     return video_details
 
 # Function to fetch video comments using the video URL
-def get_video_comments(video_id):
+def get_video_comments(video_url):
+    video_id = video_url.split("v=")[-1]
     comments = []
     results = youtube.commentThreads().list(
         part="snippet",
@@ -407,19 +394,15 @@ if st.sidebar.button("Search"):
     if video_details:
         for video in video_details:
             st.write(f"**{video[0]}**")
-            st.write(f"Published at: {video[4]}")
-            st.write(f"Likes: {video[5]}, Views: {video[6]}")
-            if st.button(f"Show Details for {video[0]}"):
-                comments = get_video_comments(video[2])
+            st.write(f"Published at: {video[3]}")
+            st.write(f"Watch Video: [Link]({video[1]})")
+            if st.checkbox(f"Analyze {video[0]}"):
                 st.subheader(f"Sentiment Analysis for {video[0]}")
+                comments = get_video_comments(video[1])  # Pass video URL
                 categorized_comments = analyze_and_categorize_comments(comments)
-                st.write("Select a sentiment category to view comments:")
-                selected_sentiment = st.selectbox("Select Sentiment Category", list(categorized_comments.keys()))
+                st.write("Select Sentiment Category:")
+                selected_sentiment = st.radio("Select Sentiment Category", list(categorized_comments.keys()))
                 st.write("Selected Sentiment Category:", selected_sentiment)
                 st.write(categorized_comments[selected_sentiment])
-                st.subheader(f"Word Cloud for {video[0]}")
-                generate_word_cloud(comments)
-                st.write("Word Cloud for the selected video:")
-
-
-
+                st.subheader("Word Cloud")
+                st.pyplot(generate_word_cloud(comments))
