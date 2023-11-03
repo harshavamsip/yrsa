@@ -289,7 +289,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY ="AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
+YOUTUBE_API_KEY = "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -371,10 +371,7 @@ def analyze_and_categorize_comments(comments):
 def generate_word_cloud(comments):
     all_comments = ' '.join(comments)
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    st.pyplot()
+    return wordcloud
 
 # Streamlit web app
 st.set_page_config(
@@ -386,23 +383,49 @@ st.set_page_config(
 st.title("YouTube Video Analyzer")
 st.sidebar.header("Search for Videos")
 
-search_query = st.sidebar.text_input("Enter the topic of interest", value="Python Tutorial")
+task = st.sidebar.radio("Select Task", ["Search Videos", "Sentiment Analysis", "Fetch Comments", "Word Cloud"])
 
-if st.sidebar.button("Search"):
-    video_details = search_and_recommend_videos(search_query)
-    st.subheader("Search Results:")
-    if video_details:
-        for video in video_details:
-            st.write(f"**{video[0]}**")
-            st.write(f"Published at: {video[3]}")
-            st.write(f"Watch Video: [Link]({video[1]})")
-            if st.checkbox(f"Analyze {video[0]}"):
-                st.subheader(f"Sentiment Analysis for {video[0]}")
-                comments = get_video_comments(video[1])  # Pass video URL
-                categorized_comments = analyze_and_categorize_comments(comments)
-                st.write("Select Sentiment Category:")
-                selected_sentiment = st.radio("Select Sentiment Category", list(categorized_comments.keys()))
-                st.write("Selected Sentiment Category:", selected_sentiment)
-                st.write(categorized_comments[selected_sentiment])
-                st.subheader("Word Cloud")
-                st.pyplot(generate_word_cloud(comments))
+if task == "Search Videos":
+    search_query = st.sidebar.text_input("Enter the topic of interest", value="Python Tutorial")
+
+    if st.sidebar.button("Search"):
+        video_details = search_and_recommend_videos(search_query)
+        st.subheader("Search Results:")
+        if video_details:
+            for video in video_details:
+                st.write(f"**{video[0]}**")
+                st.write(f"Published at: {video[3]}")
+                st.write(f"Watch Video: [Link]({video[1]})")
+
+if task == "Sentiment Analysis":
+    video_url = st.sidebar.text_input("Enter YouTube Video URL")
+
+    if st.sidebar.button("Analyze Sentiment"):
+        comments = get_video_comments(video_url)
+        st.subheader("Sentiment Analysis")
+        categorized_comments = analyze_and_categorize_comments(comments)
+        for sentiment, sentiment_comments in categorized_comments.items():
+            st.write(sentiment)
+            for comment in sentiment_comments:
+                st.write(comment)
+
+if task == "Fetch Comments":
+    video_url = st.sidebar.text_input("Enter YouTube Video URL")
+
+    if st.sidebar.button("Fetch Comments"):
+        comments = get_video_comments(video_url)
+        st.subheader("Video Comments")
+        for comment in comments:
+            st.write(comment)
+
+if task == "Word Cloud":
+    video_url = st.sidebar.text_input("Enter YouTube Video URL")
+
+    if st.sidebar.button("Generate Word Cloud"):
+        comments = get_video_comments(video_url)
+        st.subheader("Word Cloud")
+        wordcloud = generate_word_cloud(comments)
+        plt.figure(figsize=(10, 5))
+        plt.imshow(wordcloud, interpolation='bilinear')
+        plt.axis('off')
+        st.pyplot()
