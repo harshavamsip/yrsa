@@ -149,7 +149,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = "AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM" # Replace with your YouTube Data API key
+YOUTUBE_API_KEY ="AIzaSyCvtRnKGLMgtNexVGm0jN_weLQ3xogV4hM"  
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -293,20 +293,13 @@ if st.sidebar.button("Search"):
             st.write(f"Watch Video: [{video[0]}]({video[1]})")
             if st.button(f"Analyze {video[0]}"):
                 comments = get_video_comments(video[2])  # Pass video ID
-                categorized_comments = analyze_and_categorize_comments(comments)
                 st.write(f"Video ID: {video[2]}")
                 st.subheader("Sentiment Analysis")
-                for sentiment, sentiment_comments in categorized_comments.items():
-                    st.write(sentiment)
-                    for comment in sentiment_comments:
-                        st.write(comment)
+                categorized_comments = analyze_and_categorize_comments(comments)
+                selected_sentiment = st.selectbox("Select Sentiment Category", list(categorized_comments.keys()))
+                if selected_sentiment != "Neutral":
+                    st.write("Sample comments for the selected category:")
+                    st.write(categorized_comments[selected_sentiment][:5])
                 st.subheader("Word Cloud")
-                generate_word_cloud(comments)
-                st.image(generate_word_cloud_image(comments), use_column_width=True)
-
-# User interface for sentiment analysis categorization
-st.subheader("Sentiment Analysis Categorization")
-selected_sentiment = st.selectbox("Select Sentiment Category", list(categorized_comments.keys()))
-if selected_sentiment != "Neutral":
-    st.write("Sample comments for the selected category:")
-    st.write(categorized_comments[selected_sentiment][:5])
+                word_cloud_image = generate_word_cloud_image(comments)
+                st.image(word_cloud_image)
