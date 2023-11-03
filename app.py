@@ -190,7 +190,7 @@ def search_and_recommend_videos(query, max_results=10):
 
     return video_details
 
-# Function to fetch video comments using the video URL
+# Function to fetch video comments
 def get_video_comments(video_id):
     comments = []
     results = youtube.commentThreads().list(
@@ -247,7 +247,6 @@ def generate_word_cloud(comments):
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
     st.pyplot()
-
 
 # Streamlit web app
 st.set_page_config(
