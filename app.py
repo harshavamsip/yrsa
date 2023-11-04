@@ -289,7 +289,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = "AIzaSyB7VcRob-PX7wBNBj3mjVDXWMxnvi8K-KI"
+YOUTUBE_API_KEY ="AIzaSyBT04zTybWEBZtavNjkT9nKkmJDkC3d7Gk"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
