@@ -335,77 +335,85 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
+YOUTUBE_API_KEY = ="AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
 
 # Function to search for videos and retrieve video details sorted by views
 def search_and_recommend_videos(query, max_results=10):
-    response = youtube.search().list(
-        q=query,
-        type="video",
-        part="id,snippet",
-        maxResults=max_results,
-        videoCaption="any",
-        order="viewCount"  # Sort by views
-    ).execute()
-
-    video_details = []
-    for item in response.get("items", []):
-        video_id = item["id"]["videoId"]
-        title = item["snippet"]["title"]
-
-        # Use a separate request to get video statistics and content details
-        video_info = youtube.videos().list(
-            part="statistics,contentDetails,snippet",
-            id=video_id
+    try:
+        response = youtube.search().list(
+            q=query,
+            type="video",
+            part="id,snippet",
+            maxResults=max_results,
+            videoCaption="any",
+            order="viewCount"  # Sort by views
         ).execute()
 
-        snippet_info = video_info.get("items", [])[0]["snippet"]
-        statistics_info = video_info.get("items", [])[0]["statistics"]
-        content_details = video_info.get("items", [])[0].get("contentDetails", {})
+        video_details = []
+        for item in response.get("items", []):
+            video_id = item["id"]["videoId"]
+            title = item["snippet"]["title"]
 
-        likes = int(statistics_info.get("likeCount", 0))
-        views = int(statistics_info.get("viewCount", 0))
-        comments = int(statistics_info.get("commentCount", 0))
-        duration = content_details.get("duration", "N/A")
-        upload_date = snippet_info.get("publishedAt", "N/A")
-        channel_title = snippet_info.get("channelTitle", "N/A")
-        thumbnail_url = snippet_info.get("thumbnails", {}).get("default", {}).get("url", "N/A")
+            # Use a separate request to get video statistics and content details
+            video_info = youtube.videos().list(
+                part="statistics,contentDetails,snippet",
+                id=video_id
+            ).execute()
 
-        link = f"https://www.youtube.com/watch?v={video_id}"
+            snippet_info = video_info.get("items", [])[0]["snippet"]
+            statistics_info = video_info.get("items", [])[0]["statistics"]
+            content_details = video_info.get("items", [])[0].get("contentDetails", {})
 
-        video_details.append((title, video_id, likes, views, comments, duration, upload_date, channel_title, link, thumbnail_url))
+            likes = int(statistics_info.get("likeCount", 0))
+            views = int(statistics_info.get("viewCount", 0))
+            comments = int(statistics_info.get("commentCount", 0))
+            duration = content_details.get("duration", "N/A")
+            upload_date = snippet_info.get("publishedAt", "N/A")
+            channel_title = snippet_info.get("channelTitle", "N/A")
+            thumbnail_url = snippet_info.get("thumbnails", {}).get("default", {}).get("url", "N/A")
 
-    return video_details
+            link = f"https://www.youtube.com/watch?v={video_id}"
+
+            video_details.append((title, video_id, likes, views, comments, duration, upload_date, channel_title, link, thumbnail_url))
+
+        return video_details
+    except googleapiclient.errors.HttpError as e:
+        st.error(f"Error fetching videos: {e}")
+        return []
 
 # Function to fetch video comments using the video ID
 def get_video_comments(video_id):
-    comments = []
-    results = youtube.commentThreads().list(
-        part="snippet",
-        videoId=video_id,
-        textFormat="plainText",
-        maxResults=100
-    ).execute()
+    try:
+        comments = []
+        results = youtube.commentThreads().list(
+            part="snippet",
+            videoId=video_id,
+            textFormat="plainText",
+            maxResults=100
+        ).execute()
 
-    while "items" in results:
-        for item in results["items"]:
-            comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-            comments.append(comment)
-        if "nextPageToken" in results:
-            results = youtube.commentThreads().list(
-                part="snippet",
-                videoId=video_id,
-                textFormat="plainText",
-                maxResults=100,
-                pageToken=results["nextPageToken"]
-            ).execute()
-        else:
-            break
+        while "items" in results:
+            for item in results["items"]:
+                comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+                comments.append(comment)
+            if "nextPageToken" in results:
+                results = youtube.commentThreads().list(
+                    part="snippet",
+                    videoId=video_id,
+                    textFormat="plainText",
+                    maxResults=100,
+                    pageToken=results["nextPageToken"]
+                ).execute()
+            else:
+                break
 
-    return comments
+        return comments
+    except googleapiclient.errors.HttpError as e:
+        st.error(f"Error fetching comments: {e}")
+        return []
 
 # Function to generate a word cloud from comments
 def generate_word_cloud(comments):
