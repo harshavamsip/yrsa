@@ -948,6 +948,7 @@ def get_video_comments(video_id):
 # Function to generate a word cloud from comments
 # Function to generate a word cloud from comments
 # Function to generate a word cloud from comments
+# Function to generate a word cloud from comments
 def generate_word_cloud(comments):
     if not comments:
         st.warning("No comments found for the given video.")
@@ -959,7 +960,8 @@ def generate_word_cloud(comments):
     wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
 
     # Display WordCloud using Streamlit
-    st.image(wordcloud.to_array(), use_column_width=True)
+    st.image(wordcloud.to_image(), use_column_width=True)
+
 
 
 
