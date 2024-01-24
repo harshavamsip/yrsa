@@ -930,6 +930,21 @@ def get_video_comments(video_id):
         st.error(f"Error fetching comments: {e}")
         return []
 
+# # Function to generate a word cloud from comments
+# def generate_word_cloud(comments):
+#     if not comments:
+#         st.warning("No comments found for the given video.")
+#         return
+
+#     all_comments = ' '.join(comments)
+#     wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
+
+#     # Display Word Cloud using Matplotlib
+#     plt.figure(figsize=(10, 5))
+#     plt.imshow(wordcloud, interpolation='bilinear')
+#     plt.axis('off')
+#     st.pyplot(plt)
+
 # Function to generate a word cloud from comments
 def generate_word_cloud(comments):
     if not comments:
@@ -944,6 +959,7 @@ def generate_word_cloud(comments):
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
     st.pyplot(plt)
+
 
 # Placeholder function for sentiment analysis
 def analyze_and_categorize_comments(comments):
