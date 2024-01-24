@@ -301,11 +301,31 @@ def extract_keywords(comments):
     
     return top_keywords
 
+# Function to get additional video details
+def get_video_details(video_id):
+    video_statistics = youtube.videos().list(
+        part="snippet,contentDetails,statistics",
+        id=video_id
+    ).execute()
+
+    if "items" in video_statistics:
+        details = video_statistics["items"][0]
+        title = details["snippet"]["title"]
+        duration = details["contentDetails"]["duration"]
+        upload_date = details["snippet"]["publishedAt"]
+        thumbnail_url = details["snippet"]["thumbnails"]["default"]["url"]
+        channel_name = details["snippet"]["channelTitle"]
+        likes = details["statistics"].get("likeCount", 0)
+        views = details["statistics"].get("viewCount", 0)
+
+        return title, duration, upload_date, thumbnail_url, channel_name, likes, views
+
 # Streamlit web app
 st.set_page_config(
     page_title="Advanced YouTube Video Analyzer",
     page_icon="📺",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 st.title("Advanced YouTube Video Analyzer")
