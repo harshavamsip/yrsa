@@ -335,7 +335,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = ="AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
+YOUTUBE_API_KEY ="AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
