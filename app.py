@@ -947,21 +947,20 @@ def get_video_comments(video_id):
 
 # Function to generate a word cloud from comments
 # Function to generate a word cloud from comments
+# Function to generate a word cloud from comments
 def generate_word_cloud(comments):
     if not comments:
         st.warning("No comments found for the given video.")
         return
 
     all_comments = ' '.join(comments)
-    
+
     # Generate WordCloud
     wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
 
-    # Display WordCloud using Matplotlib
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    st.pyplot(plt)
+    # Display WordCloud using Streamlit
+    st.image(wordcloud.to_array(), use_column_width=True)
+
 
 
 # Placeholder function for sentiment analysis
