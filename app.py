@@ -957,9 +957,9 @@ def generate_word_cloud(comments):
     all_comments = ' '.join(comments)
 
     # Generate WordCloud
-    wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
 
-    # Display WordCloud using Streamlit
+    # Display WordCloud using Matplotlib
     st.image(wordcloud.to_image(), use_column_width=True)
 
 # Streamlit web app
@@ -983,7 +983,7 @@ if task == "Search Video Details":
         if video_details:
             for video in video_details:
                 st.write(f"**{video[0]}**")
-                st.image(video[9], caption="Thumbnail", use_column_width=True, height=150)  # Adjust the height as needed
+                st.write(f"<img src='{video[9]}' alt='Thumbnail' style='max-height: 150px;'>", unsafe_allow_html=True)
                 st.write(f"Video ID: {video[1]}")
                 st.write(f"Likes: {video[2]}, Views: {video[3]}, Comments: {video[4]}")
                 st.write(f"Duration: {video[5]}, Upload Date: {video[6]}")
@@ -1024,3 +1024,4 @@ if task == "Generate Word Cloud":
         comments = get_video_comments(video_id)
         st.subheader("Word Cloud")
         generate_word_cloud(comments)
+
