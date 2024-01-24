@@ -1044,4 +1044,3 @@ if task == "Generate Word Cloud":
         comments = get_video_comments(video_id)
         st.subheader("Word Cloud")
         generate_word_cloud(comments)
-
