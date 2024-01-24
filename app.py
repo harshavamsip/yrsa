@@ -458,7 +458,7 @@ if task == "Search Video Details":
         if video_details:
             for video in video_details:
                 st.write(f"**{video[0]}**")
-                st.image(video[8], caption="Thumbnail", use_column_width=True, height=150)  # Adjust the height as needed
+                st.write(f"<img src='{video[8]}' alt='Thumbnail' style='max-height: 150px;'>", unsafe_allow_html=True)  # Adjust the max-height as needed
                 st.write(f"Video ID: {video[1]}")
                 st.write(f"Likes: {video[2]}, Views: {video[3]}")
                 st.write(f"Duration: {video[4]}, Upload Date: {video[5]}")
