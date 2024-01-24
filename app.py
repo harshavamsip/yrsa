@@ -850,7 +850,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = "AIzaSyDKLug__oN6TIAzeVJ76LIwuccNk-eZ-Yg"
+YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -930,24 +930,24 @@ def get_video_comments(video_id):
         st.error(f"Error fetching comments: {e}")
         return []
 
-# # Function to generate a word cloud from comments
-# def generate_word_cloud(comments):
-#     if not comments:
-#         st.warning("No comments found for the given video.")
-#         return
+# Function to analyze and categorize comments based on sentiment
+def analyze_and_categorize_comments(comments):
+    categorized_comments = {"Positive": [], "Neutral": [], "Negative": []}
 
-#     all_comments = ' '.join(comments)
-#     wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
+    for comment in comments:
+        analysis = TextBlob(comment)
+        polarity = analysis.sentiment.polarity
+        subjectivity = analysis.sentiment.subjectivity
 
-#     # Display Word Cloud using Matplotlib
-#     plt.figure(figsize=(10, 5))
-#     plt.imshow(wordcloud, interpolation='bilinear')
-#     plt.axis('off')
-#     st.pyplot(plt)
+        if polarity > 0:
+            categorized_comments["Positive"].append((comment, polarity, subjectivity))
+        elif polarity == 0:
+            categorized_comments["Neutral"].append((comment, polarity, subjectivity))
+        else:
+            categorized_comments["Negative"].append((comment, polarity, subjectivity))
 
-# Function to generate a word cloud from comments
-# Function to generate a word cloud from comments
-# Function to generate a word cloud from comments
+    return categorized_comments
+
 # Function to generate a word cloud from comments
 def generate_word_cloud(comments):
     if not comments:
@@ -961,27 +961,6 @@ def generate_word_cloud(comments):
 
     # Display WordCloud using Streamlit
     st.image(wordcloud.to_image(), use_column_width=True)
-
-
-
-
-# Placeholder function for sentiment analysis
-def analyze_and_categorize_comments(comments):
-    # Replace this placeholder with your actual sentiment analysis logic
-    categorized_comments = {'Positive': [], 'Negative': [], 'Neutral': []}
-    for comment in comments:
-        analysis = TextBlob(comment)
-        polarity = analysis.sentiment.polarity
-        subjectivity = analysis.sentiment.subjectivity
-
-        if polarity > 0:
-            categorized_comments['Positive'].append((comment, polarity, subjectivity))
-        elif polarity < 0:
-            categorized_comments['Negative'].append((comment, polarity, subjectivity))
-        else:
-            categorized_comments['Neutral'].append((comment, polarity, subjectivity))
-
-    return categorized_comments
 
 # Streamlit web app
 st.set_page_config(
@@ -1004,7 +983,7 @@ if task == "Search Video Details":
         if video_details:
             for video in video_details:
                 st.write(f"**{video[0]}**")
-                st.write(f"<img src='{video[9]}' alt='Thumbnail' style='max-height: 150px;'>", unsafe_allow_html=True)
+                st.image(video[9], caption="Thumbnail", use_column_width=True, height=150)  # Adjust the height as needed
                 st.write(f"Video ID: {video[1]}")
                 st.write(f"Likes: {video[2]}, Views: {video[3]}, Comments: {video[4]}")
                 st.write(f"Duration: {video[5]}, Upload Date: {video[6]}")
@@ -1017,8 +996,6 @@ if task == "Sentiment Analysis":
     if st.sidebar.button("Analyze Sentiment"):
         comments = get_video_comments(video_id)
         st.subheader("Sentiment Analysis")
-
-        # Use the placeholder function for sentiment analysis
         categorized_comments = analyze_and_categorize_comments(comments)
 
         # Display additional metrics
