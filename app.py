@@ -149,6 +149,9 @@
 #         wordcloud = generate_word_cloud(comments)
 #         st.pyplot(wordcloud)
 
+Certainly! Here's the complete code without any additional attachments:
+
+```python
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
@@ -177,23 +180,22 @@ def search_and_recommend_videos(query, max_results=10):
         video_id = item["id"]["videoId"]
         title = item["snippet"]["title"]
 
-        # Use a separate request to get video statistics
-        video_statistics = youtube.videos().list(
-            part="statistics,snippet",
+        # Use a separate request to get video statistics and content details
+        video_info = youtube.videos().list(
+            part="statistics,contentDetails,snippet",
             id=video_id
         ).execute()
 
-        likes = 0
-        views = 0
-        duration = video_statistics["items"][0]["contentDetails"]["duration"]
-        upload_date = video_statistics["items"][0]["snippet"]["publishedAt"]
-        channel_title = video_statistics["items"][0]["snippet"]["channelTitle"]
-        thumbnail_url = video_statistics["items"][0]["snippet"]["thumbnails"]["default"]["url"]
+        snippet_info = video_info.get("items", [])[0]["snippet"]
+        statistics_info = video_info.get("items", [])[0]["statistics"]
+        content_details = video_info.get("items", [])[0].get("contentDetails", {})
 
-        if "statistics" in video_statistics:
-            statistics = video_statistics["items"][0]["statistics"]
-            likes = int(statistics.get("likeCount", 0))
-            views = int(statistics.get("viewCount", 0))
+        likes = int(statistics_info.get("likeCount", 0))
+        views = int(statistics_info.get("viewCount", 0))
+        duration = content_details.get("duration", "N/A")
+        upload_date = snippet_info.get("publishedAt", "N/A")
+        channel_title = snippet_info.get("channelTitle", "N/A")
+        thumbnail_url = snippet_info.get("thumbnails", {}).get("default", {}).get("url", "N/A")
 
         link = f"https://www.youtube.com/watch?v={video_id}"
 
@@ -323,5 +325,4 @@ if task == "Generate Word Cloud":
         st.subheader("Word Cloud")
         wordcloud = generate_word_cloud(comments)
         st.pyplot(wordcloud)
-
-
+```
