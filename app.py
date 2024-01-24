@@ -149,9 +149,9 @@
 #         wordcloud = generate_word_cloud(comments)
 #         st.pyplot(wordcloud)
 
-Certainly! Here's the complete code without any additional attachments:
 
-```python
+
+
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
