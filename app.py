@@ -431,7 +431,7 @@ def analyze_and_categorize_comments(comments):
 # Function to generate a word cloud from comments
 def generate_word_cloud(comments):
     all_comments = ' '.join(comments)
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
+    wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
@@ -458,7 +458,7 @@ if task == "Search Video Details":
         if video_details:
             for video in video_details:
                 st.write(f"**{video[0]}**")
-                st.image(video[8], caption="Thumbnail", use_column_width=True)
+                st.image(video[8], caption="Thumbnail", use_column_width=True, height=150)  # Adjust the height as needed
                 st.write(f"Video ID: {video[1]}")
                 st.write(f"Likes: {video[2]}, Views: {video[3]}")
                 st.write(f"Duration: {video[4]}, Upload Date: {video[5]}")
