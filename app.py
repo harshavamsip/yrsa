@@ -1017,6 +1017,26 @@ if task == "Sentiment Analysis":
             for comment in sentiment_comments:
                 st.write(comment[0])
 
+        # Display buttons to show Positive, Negative, and Neutral comments
+        show_positive = st.button("Show Positive Comments")
+        show_negative = st.button("Show Negative Comments")
+        show_neutral = st.button("Show Neutral Comments")
+
+        if show_positive:
+            st.subheader("Positive Comments")
+            for comment in categorized_comments["Positive"]:
+                st.write(comment[0])
+
+        if show_negative:
+            st.subheader("Negative Comments")
+            for comment in categorized_comments["Negative"]:
+                st.write(comment[0])
+
+        if show_neutral:
+            st.subheader("Neutral Comments")
+            for comment in categorized_comments["Neutral"]:
+                st.write(comment[0])
+
 if task == "Generate Word Cloud":
     video_id = st.sidebar.text_input("Enter Video ID")
 
