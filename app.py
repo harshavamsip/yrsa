@@ -945,6 +945,24 @@ def generate_word_cloud(comments):
     plt.axis('off')
     st.pyplot(plt)
 
+# Placeholder function for sentiment analysis
+def analyze_and_categorize_comments(comments):
+    # Replace this placeholder with your actual sentiment analysis logic
+    categorized_comments = {'Positive': [], 'Negative': [], 'Neutral': []}
+    for comment in comments:
+        analysis = TextBlob(comment)
+        polarity = analysis.sentiment.polarity
+        subjectivity = analysis.sentiment.subjectivity
+
+        if polarity > 0:
+            categorized_comments['Positive'].append((comment, polarity, subjectivity))
+        elif polarity < 0:
+            categorized_comments['Negative'].append((comment, polarity, subjectivity))
+        else:
+            categorized_comments['Neutral'].append((comment, polarity, subjectivity))
+
+    return categorized_comments
+
 # Streamlit web app
 st.set_page_config(
     page_title="YouTube Video Analyzer",
@@ -979,6 +997,8 @@ if task == "Sentiment Analysis":
     if st.sidebar.button("Analyze Sentiment"):
         comments = get_video_comments(video_id)
         st.subheader("Sentiment Analysis")
+
+        # Use the placeholder function for sentiment analysis
         categorized_comments = analyze_and_categorize_comments(comments)
 
         # Display additional metrics
@@ -1007,4 +1027,3 @@ if task == "Generate Word Cloud":
         comments = get_video_comments(video_id)
         st.subheader("Word Cloud")
         generate_word_cloud(comments)
-
