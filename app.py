@@ -324,5 +324,4 @@ if task == "Generate Word Cloud":
         comments = get_video_comments(video_id)
         st.subheader("Word Cloud")
         wordcloud = generate_word_cloud(comments)
-        st.pyplot(wordcloud)
-```
+
