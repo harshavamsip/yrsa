@@ -475,10 +475,8 @@ if task == "Sentiment Analysis":
 
         # Display additional metrics
         st.write(f"Total Comments: {len(comments)}")
-        st.write(f"Average Sentiment Polarity: {sum([p[1] for p in categorized_comments['Positive'] + categorized_comments['Negative']]) / len(comments)}")
-        st.write(f"Average Sentiment Subjectivity:
-
- {sum([s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']]) / len(comments)}")
+        st.write(f"Average Sentiment Polarity: {sum(s[1] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
+        st.write(f"Average Sentiment Subjectivity: {sum(s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
 
         # Display sentiment distribution chart
         sentiment_df = []
@@ -502,5 +500,3 @@ if task == "Generate Word Cloud":
         st.subheader("Word Cloud")
         wordcloud = generate_word_cloud(comments)
         st.pyplot(wordcloud)
-
-
