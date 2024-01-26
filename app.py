@@ -3,6 +3,7 @@ import googleapiclient.discovery
 from textblob import TextBlob
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+import os
 
 # Set your YouTube Data API key here
 YOUTUBE_API_KEY ="AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
@@ -96,12 +97,26 @@ def analyze_and_categorize_comments(comments):
 
 # Function to generate a word cloud from comments
 def generate_word_cloud(comments):
+    if not comments:
+        st.warning("No comments found for generating the word cloud.")
+        return None
+
     all_comments = ' '.join(comments)
+    
+    if not all_comments.strip():
+        st.warning("No valid text found for generating the word cloud.")
+        return None
+
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
-    return plt
+
+    # Save the word cloud as an image file
+    tmp_file_path = "wordcloud.png"
+    plt.savefig(tmp_file_path, bbox_inches='tight')
+
+    return tmp_file_path
 
 # Streamlit web app
 st.set_page_config(
@@ -146,5 +161,11 @@ if task == "Generate Word Cloud":
     if st.sidebar.button("Generate Word Cloud"):
         comments = get_video_comments(video_id)
         st.subheader("Word Cloud")
-        wordcloud = generate_word_cloud(comments)
-        st.pyplot(wordcloud)
+        wordcloud_path = generate_word_cloud(comments)
+        
+        if wordcloud_path is not None:
+            st.image(wordcloud_path, use_container_width=True)
+
+# Remove the temporary word cloud image file
+if os.path.exists("wordcloud.png"):
+    os.remove("wordcloud.png")
