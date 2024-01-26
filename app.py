@@ -96,6 +96,7 @@ def analyze_and_categorize_comments(comments):
     return categorized_comments
 
 # Function to generate a word cloud from comments
+# Function to generate a word cloud from comments
 def generate_word_cloud(comments):
     if not comments:
         st.warning("No comments found for generating the word cloud.")
@@ -107,6 +108,9 @@ def generate_word_cloud(comments):
         st.warning("No valid text found for generating the word cloud.")
         return None
 
+    # Remove non-ASCII characters
+    all_comments = ''.join(char for char in all_comments if ord(char) < 128)
+
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
@@ -117,6 +121,7 @@ def generate_word_cloud(comments):
     plt.savefig(tmp_file_path, bbox_inches='tight')
 
     return tmp_file_path
+
 
 # Streamlit web app
 st.set_page_config(
