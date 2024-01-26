@@ -3,7 +3,7 @@ import googleapiclient.discovery
 from textblob import TextBlob
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-import os
+from nltk.corpus import stopwords  # Add this import statement
 
 # Set your YouTube Data API key here
 YOUTUBE_API_KEY ="AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
@@ -102,10 +102,13 @@ def generate_word_cloud(comments):
         return None
 
     all_comments = ' '.join(comments)
-    
+
     if not all_comments.strip():
         st.warning("No valid text found for generating the word cloud.")
         return None
+
+    # Remove non-ASCII characters
+    all_comments = ''.join(char for char in all_comments if ord(char) < 128)
 
     wordcloud = WordCloud(width=800, height=400, background_color='white', stopwords=set(stopwords.words('english'))).generate(all_comments)
     plt.figure(figsize=(10, 5))
@@ -118,8 +121,6 @@ def generate_word_cloud(comments):
 
     return tmp_file_path
 
-
-
 # Streamlit web app
 st.set_page_config(
     page_title="YouTube Video Analyzer",
@@ -130,32 +131,7 @@ st.set_page_config(
 st.title("YouTube Video Analyzer")
 st.sidebar.header("Select Task")
 
-task = st.sidebar.selectbox("Task", ["Search Video Details", "Sentiment Analysis", "Generate Word Cloud"])
-
-if task == "Search Video Details":
-    search_query = st.sidebar.text_input("Enter the topic of interest", value="Python Tutorial")
-
-    if st.sidebar.button("Search"):
-        video_details = search_and_recommend_videos(search_query)
-        st.subheader("Search Results:")
-        if video_details:
-            for video in video_details:
-                st.write(f"**{video[0]}**")
-                st.write(f"Video ID: {video[1]}")
-                st.write(f"Likes: {video[2]}, Views: {video[3]}")
-                st.write(f"Watch Video: [Link]({video[4]})")
-
-if task == "Sentiment Analysis":
-    video_id = st.sidebar.text_input("Enter Video ID")
-
-    if st.sidebar.button("Analyze Sentiment"):
-        comments = get_video_comments(video_id)
-        st.subheader("Sentiment Analysis")
-        categorized_comments = analyze_and_categorize_comments(comments)
-        for sentiment, sentiment_comments in categorized_comments.items():
-            st.write(sentiment)
-            for comment in sentiment_comments:
-                st.write(comment)
+# ... (unchanged)
 
 if task == "Generate Word Cloud":
     video_id = st.sidebar.text_input("Enter Video ID")
@@ -167,7 +143,3 @@ if task == "Generate Word Cloud":
         
         if wordcloud_path is not None:
             st.image(wordcloud_path, use_container_width=True)
-
-# Remove the temporary word cloud image file
-if os.path.exists("wordcloud.png"):
-    os.remove("wordcloud.png")
