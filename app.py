@@ -1,4 +1,3 @@
-
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
@@ -87,26 +86,21 @@ def get_video_comments(video_id):
         st.error(f"Error fetching comments: {e}")
         return []
 
-# Function to perform sentiment analysis and categorize comments
+# Function to analyze and categorize comments based on sentiment
 def analyze_and_categorize_comments(comments):
-    categorized_comments = {
-        "Positive": [],
-        "Negative": [],
-        "Neutral": []
-    }
+    categorized_comments = {"Positive": [], "Neutral": [], "Negative": []}
 
     for comment in comments:
         analysis = TextBlob(comment)
-        sentiment_polarity = analysis.sentiment.polarity
-        sentiment_subjectivity = analysis.sentiment.subjectivity
+        polarity = analysis.sentiment.polarity
+        subjectivity = analysis.sentiment.subjectivity
 
-        # Categorize based on polarity
-        if sentiment_polarity > 0.2:
-            categorized_comments["Positive"].append((comment, sentiment_polarity, sentiment_subjectivity))
-        elif sentiment_polarity < -0.2:
-            categorized_comments["Negative"].append((comment, sentiment_polarity, sentiment_subjectivity))
+        if polarity > 0:
+            categorized_comments["Positive"].append((comment, polarity, subjectivity))
+        elif polarity == 0:
+            categorized_comments["Neutral"].append((comment, polarity, subjectivity))
         else:
-            categorized_comments["Neutral"].append((comment, sentiment_polarity, sentiment_subjectivity))
+            categorized_comments["Negative"].append((comment, polarity, subjectivity))
 
     return categorized_comments
 
@@ -114,14 +108,15 @@ def analyze_and_categorize_comments(comments):
 def generate_word_cloud(comments):
     if not comments:
         st.warning("No comments found for the given video.")
-        return None
+        return
 
     all_comments = ' '.join(comments)
+
+    # Generate WordCloud
     wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    return plt
+
+    # Display WordCloud using Streamlit
+    st.image(wordcloud.to_image(), use_column_width=True)
 
 # Streamlit web app
 st.set_page_config(
@@ -144,7 +139,7 @@ if task == "Search Video Details":
         if video_details:
             for video in video_details:
                 st.write(f"**{video[0]}**")
-                st.write(f"<img src='{video[9]}' alt='Thumbnail' style='max-height: 150px;'>", unsafe_allow_html=True)
+                st.image(video[9], caption="Thumbnail", use_column_width=True, height=150)  # Adjust the height as needed
                 st.write(f"Video ID: {video[1]}")
                 st.write(f"Likes: {video[2]}, Views: {video[3]}, Comments: {video[4]}")
                 st.write(f"Duration: {video[5]}, Upload Date: {video[6]}")
@@ -158,13 +153,25 @@ if task == "Sentiment Analysis":
         comments = get_video_comments(video_id)
         st.subheader("Sentiment Analysis")
         categorized_comments = analyze_and_categorize_comments(comments)
+
+        # Display additional metrics
+        st.write(f"Total Comments: {len(comments)}")
+        st.write(f"Average Sentiment Polarity: {sum(s[1] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
+        st.write(f"Average Sentiment Subjectivity: {sum(s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
+
+        # Display sentiment distribution chart
+        sentiment_df = []
         for sentiment, sentiment_comments in categorized_comments.items():
-            st.write(sentiment)
-            for comment_info in sentiment_comments:
-                st.write(f"Comment: {comment_info[0]}")
-                st.write(f"Polarity: {comment_info[1]}")
-                st.write(f"Subjectivity: {comment_info[2]}")
-                st.write("---")
+            sentiment_df.extend([(sentiment, comment[1], comment[2]) for comment in sentiment_comments])
+
+        sentiment_chart = px.scatter(sentiment_df, x=1, y=2, color=0, labels={'1': 'Polarity', '2': 'Subjectivity'}, title='Sentiment Analysis')
+        st.plotly_chart(sentiment_chart)
+
+        # Display categorized comments
+        for sentiment, sentiment_comments in categorized_comments.items():
+            st.subheader(sentiment)
+            for comment in sentiment_comments:
+                st.write(comment[0])
 
 if task == "Generate Word Cloud":
     video_id = st.sidebar.text_input("Enter Video ID")
@@ -172,7 +179,4 @@ if task == "Generate Word Cloud":
     if st.sidebar.button("Generate Word Cloud"):
         comments = get_video_comments(video_id)
         st.subheader("Word Cloud")
-        wordcloud = generate_word_cloud(comments)
-        if wordcloud:
-            st.pyplot(wordcloud)
-
+        generate_word_cloud(comments)
