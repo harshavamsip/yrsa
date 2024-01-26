@@ -1,6 +1,3 @@
-
-
-
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
@@ -105,7 +102,7 @@ def analyze_and_categorize_comments(comments):
 # Function to generate a word cloud from comments
 def generate_word_cloud(comments):
     all_comments = ' '.join(comments)
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments)
+    wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
@@ -132,7 +129,7 @@ if task == "Search Video Details":
         if video_details:
             for video in video_details:
                 st.write(f"**{video[0]}**")
-                st.image(video[8], caption="Thumbnail", use_column_width=True)
+                st.write(f"<img src='{video[8]}' alt='Thumbnail' style='max-height: 150px;'>", unsafe_allow_html=True)  # Adjust the max-height as needed
                 st.write(f"Video ID: {video[1]}")
                 st.write(f"Likes: {video[2]}, Views: {video[3]}")
                 st.write(f"Duration: {video[4]}, Upload Date: {video[5]}")
@@ -149,8 +146,8 @@ if task == "Sentiment Analysis":
 
         # Display additional metrics
         st.write(f"Total Comments: {len(comments)}")
-        st.write(f"Average Sentiment Polarity: {sum([p[1] for p in categorized_comments['Positive'] + categorized_comments['Negative']]) / len(comments)}")
-        st.write(f"Average Sentiment Subjectivity: {sum([s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']]) / len(comments)}")
+        st.write(f"Average Sentiment Polarity: {sum(s[1] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
+        st.write(f"Average Sentiment Subjectivity: {sum(s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
 
         # Display sentiment distribution chart
         sentiment_df = []
@@ -173,3 +170,6 @@ if task == "Generate Word Cloud":
         comments = get_video_comments(video_id)
         st.subheader("Word Cloud")
         wordcloud = generate_word_cloud(comments)
+        st.pyplot(wordcloud)
+
+
