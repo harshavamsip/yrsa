@@ -1,3 +1,4 @@
+
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
@@ -86,33 +87,40 @@ def get_video_comments(video_id):
         st.error(f"Error fetching comments: {e}")
         return []
 
-# Function to analyze and categorize comments
+# Function to perform sentiment analysis and categorize comments
 def analyze_and_categorize_comments(comments):
-    categorized_comments = {"Positive": [], "Negative": [], "Neutral": []}
+    categorized_comments = {
+        "Positive": [],
+        "Negative": [],
+        "Neutral": []
+    }
 
     for comment in comments:
         analysis = TextBlob(comment)
-        polarity = analysis.sentiment.polarity
-        subjectivity = analysis.sentiment.subjectivity
+        sentiment_polarity = analysis.sentiment.polarity
+        sentiment_subjectivity = analysis.sentiment.subjectivity
 
-        if polarity > 0:
-            categorized_comments["Positive"].append((comment, polarity, subjectivity))
-        elif polarity < 0:
-            categorized_comments["Negative"].append((comment, polarity, subjectivity))
+        # Categorize based on polarity
+        if sentiment_polarity > 0.2:
+            categorized_comments["Positive"].append((comment, sentiment_polarity, sentiment_subjectivity))
+        elif sentiment_polarity < -0.2:
+            categorized_comments["Negative"].append((comment, sentiment_polarity, sentiment_subjectivity))
         else:
-            categorized_comments["Neutral"].append((comment, polarity, subjectivity))
+            categorized_comments["Neutral"].append((comment, sentiment_polarity, sentiment_subjectivity))
 
     return categorized_comments
 
 # Function to generate a word cloud from comments
 def generate_word_cloud(comments):
+    if not comments:
+        st.warning("No comments found for the given video.")
+        return None
+
     all_comments = ' '.join(comments)
     wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
-
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
-
     return plt
 
 # Streamlit web app
@@ -128,103 +136,43 @@ st.sidebar.header("Select Task")
 task = st.sidebar.selectbox("Task", ["Search Video Details", "Sentiment Analysis", "Generate Word Cloud"])
 
 if task == "Search Video Details":
-    search_query = st.sidebar.text_input("Enter search query:")
-    max_results = st.sidebar.slider("Max Results", min_value=1, max_value=50, value=10)
+    search_query = st.sidebar.text_input("Enter the topic of interest", value="Python Tutorial")
 
     if st.sidebar.button("Search"):
-        videos = search_and_recommend_videos(search_query, max_results)
-        if videos:
-            st.header("Top Videos Matching the Query")
-            for video in videos:
-                st.subheader(video[0])
-                st.write(f"**Video Link:** {video[8]}")
-                st.image(video[9], use_column_width=True)
-                st.write(f"**Likes:** {video[2]} | **Views:** {video[3]} | **Comments:** {video[4]}")
-                st.write(f"**Duration:** {video[5]} | **Uploaded On:** {video[6]} | **Channel:** {video[7]}")
-                st.write("---")
-else:
-    video_url = st.sidebar.text_input("Enter YouTube Video URL:")
-    video_id = video_url.split("v=")[1] if "v=" in video_url else None
+        video_details = search_and_recommend_videos(search_query)
+        st.subheader("Search Results:")
+        if video_details:
+            for video in video_details:
+                st.write(f"**{video[0]}**")
+                st.write(f"<img src='{video[9]}' alt='Thumbnail' style='max-height: 150px;'>", unsafe_allow_html=True)
+                st.write(f"Video ID: {video[1]}")
+                st.write(f"Likes: {video[2]}, Views: {video[3]}, Comments: {video[4]}")
+                st.write(f"Duration: {video[5]}, Upload Date: {video[6]}")
+                st.write(f"Channel: {video[7]}")
+                st.write(f"Watch Video: [Link]({video[8]})")
 
-    if video_id and st.sidebar.button("Analyze"):
-        st.header("YouTube Video Analysis")
+if task == "Sentiment Analysis":
+    video_id = st.sidebar.text_input("Enter Video ID")
 
-        st.subheader("Video Details")
-
-        # Display video details
-        if video_id:
-            video_info = youtube.videos().list(
-                part="snippet",
-                id=video_id
-            ).execute()
-            snippet_info = video_info.get("items", [])[0]["snippet"]
-            st.image(snippet_info["thumbnails"]["default"]["url"], use_column_width=True)
-            st.write(f"**Title:** {snippet_info['title']}")
-            st.write(f"**Description:** {snippet_info.get('description', 'N/A')}")
-            st.write("---")
-
+    if st.sidebar.button("Analyze Sentiment"):
+        comments = get_video_comments(video_id)
         st.subheader("Sentiment Analysis")
-        st.write(f"**Video ID:** {video_id}")
+        categorized_comments = analyze_and_categorize_comments(comments)
+        for sentiment, sentiment_comments in categorized_comments.items():
+            st.write(sentiment)
+            for comment_info in sentiment_comments:
+                st.write(f"Comment: {comment_info[0]}")
+                st.write(f"Polarity: {comment_info[1]}")
+                st.write(f"Subjectivity: {comment_info[2]}")
+                st.write("---")
 
-        # Display sentiment analysis
-        if video_id:
-            comments = get_video_comments(video_id)
-            st.write(f"**Total Comments:** {len(comments)}")
+if task == "Generate Word Cloud":
+    video_id = st.sidebar.text_input("Enter Video ID")
 
-            if comments:
-                categorized_comments = analyze_and_categorize_comments(comments)
-
-                st.write("Sentiment Distribution:")
-                fig_sentiment = px.pie(
-                    values=[len(categorized_comments["Positive"]), len(categorized_comments["Negative"]),
-                            len(categorized_comments["Neutral"])],
-                    names=["Positive", "Negative", "Neutral"],
-                    title="Sentiment Distribution",
-                )
-                st.plotly_chart(fig_sentiment)
-
-                st.write("Average Sentiment Polarity:")
-                average_polarity = sum(s[1] for s in categorized_comments["Positive"] + categorized_comments["Negative"] +
-                                      categorized_comments["Neutral"]) / len(comments)
-                st.write(f"Average Sentiment Polarity: {average_polarity:.4f}")
-
-                st.subheader("Word Cloud")
-                st.pyplot(generate_word_cloud(comments))
-
-                st.subheader("Comments Analysis")
-                st.write("Select a category to display respective comments:")
-                selected_category = st.selectbox("Select Category", ["Positive", "Negative", "Neutral"])
-
-                if selected_category == "Positive":
-                    st.write("Positive Comments:")
-                    st.write("\n".join([comment[0] for comment in categorized_comments["Positive"]]))
-                elif selected_category == "Negative":
-                    st.write("Negative Comments:")
-                    st.write("\n".join([comment[0] for comment in categorized_comments["Negative"]]))
-                elif selected_category == "Neutral":
-                    st.write("Neutral Comments:")
-                    st.write("\n".join([comment[0] for comment in categorized_comments["Neutral"]]))
-else:
-    st.subheader("Word Cloud Generator")
-
-    st.sidebar.subheader("Word Cloud Settings")
-    max_words = st.sidebar.number_input("Max Words", min_value=10, max_value=500, value=200)
-    width = st.sidebar.number_input("Width", min_value=100, max_value=2000, value=800)
-    height = st.sidebar.number_input("Height", min_value=100, max_value=2000, value=400)
-    background_color = st.sidebar.color_picker("Background Color", value="#FFFFFF")
-    collocations = st.sidebar.checkbox("Enable Collocations", value=False)
-
-    st.sidebar.subheader("Word Cloud Preview")
-    word_cloud_preview = generate_word_cloud(["Sample Text"])
-    st.sidebar.pyplot(word_cloud_preview)
-
-    st.subheader("Generate Word Cloud")
-    video_url_wc = st.text_input("Enter YouTube Video URL:")
-    video_id_wc = video_url_wc.split("v=")[1] if "v=" in video_url_wc else None
-
-    if video_id_wc and st.button("Generate"):
-        st.header("Word Cloud Analysis")
-
+    if st.sidebar.button("Generate Word Cloud"):
+        comments = get_video_comments(video_id)
         st.subheader("Word Cloud")
-        wc_comments = get_video_comments(video_id_wc)
-        st.pyplot(generate_word_cloud(wc_comments))
+        wordcloud = generate_word_cloud(comments)
+        if wordcloud:
+            st.pyplot(wordcloud)
+
