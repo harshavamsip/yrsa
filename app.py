@@ -495,7 +495,7 @@ def analyze_and_visualize_keywords(comments):
 def perform_ner_on_comments(comments):
     try:
         all_comments_text = ' '.join(comments)
-        ner_pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english", tokenizer="dbmdz/bert-large-cased-finetuned-conll03-english")
+        ner_pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english")
         entities = ner_pipeline(all_comments_text)
 
         st.subheader("Named Entity Recognition (NER) Results")
@@ -576,15 +576,15 @@ elif task_category == "Sentiment Analysis":
 
 elif task_category == "Keyword Extraction and Word Cloud":
     if st.sidebar.button("Generate Word Cloud"):
-        comments = get_video_comments("YOUR_VIDEO_ID")  # Replace with a valid video ID
+        comments = get_video_comments(video_id)
         analyze_and_visualize_keywords(comments)
 
 elif task_category == "Named Entity Recognition (NER)":
     if st.sidebar.button("Perform NER"):
-        comments = get_video_comments("YOUR_VIDEO_ID")  # Replace with a valid video ID
+        comments = get_video_comments(video_id)
         perform_ner_on_comments(comments)
 
 elif task_category == "Summary Generation":
     if st.sidebar.button("Generate Summary"):
-        comments = get_video_comments("YOUR_VIDEO_ID")  # Replace with a valid video ID
+        comments = get_video_comments(video_id)
         generate_summary(comments)
