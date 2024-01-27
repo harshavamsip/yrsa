@@ -1,8 +1,8 @@
-import streamlit as st
-import googleapiclient.discovery
-from textblob import TextBlob
-import plotly.express as px
-from sklearn.externals import joblib
+# import streamlit as st
+# import googleapiclient.discovery
+# from textblob import TextBlob
+# import plotly.express as px
+# from sklearn.externals import joblib
 
 
 
@@ -377,10 +377,10 @@ import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
 import plotly.express as px
-from profanity_check import predict
+import joblib
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
+YOUTUBE_API_KEY = "YOUR_YOUTUBE_API_KEY"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -432,7 +432,6 @@ def search_and_recommend_videos(query, max_results=10):
 # Function to fetch video comments using the video ID
 def get_video_comments(video_id):
     try:
-        st.write(f"Fetching comments for video ID: {video_id}")  # Debugging statement
         comments = []
         results = youtube.commentThreads().list(
             part="snippet",
@@ -489,8 +488,7 @@ st.set_page_config(
 st.title("YouTube Video Analyzer")
 st.sidebar.header("Select Task")
 
-tasks = ["Search Video Details", "Sentiment Analysis", "Profanity Check"]
-
+tasks = ["Search Video Details", "Sentiment Analysis", "Task3", "Task4"]  # Add your tasks here
 task = st.sidebar.selectbox("Task", tasks)
 
 if task == "Search Video Details":
@@ -540,29 +538,5 @@ if task == "Sentiment Analysis":
                 st.subheader(sentiment)
                 for comment in sentiment_comments:
                     st.write(comment[0])
-        else:
-            st.warning("No comments found for the given video.")
-
-if task == "Profanity Check":
-    # Provide a valid video ID or update the input method based on your needs
-    video_id = st.sidebar.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
-
-    if st.sidebar.button("Check Profanity"):
-        comments = get_video_comments(video_id)
-        st.subheader("Profanity Check")
-
-        # Check if there are comments before analysis
-        if comments:
-            profanity_predictions = predict(comments)
-
-            # Display profanity predictions
-            st.write(f"Total Comments: {len(comments)}")
-            st.write(f"Profanity Count: {sum(profanity_predictions)}")
-
-            # Display comments with profanity
-            st.subheader("Comments with Profanity")
-            for i, comment in enumerate(comments):
-                if profanity_predictions[i] == 1:
-                    st.write(comment)
         else:
             st.warning("No comments found for the given video.")
