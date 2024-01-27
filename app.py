@@ -378,6 +378,7 @@ import googleapiclient.discovery
 from textblob import TextBlob
 import plotly.express as px
 from transformers import pipeline
+from profanity_check import predict
 
 # Set your YouTube Data API key here
 YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
@@ -427,116 +428,6 @@ def analyze_and_categorize_comments(comments):
 
     return categorized_comments
 
-# Streamlit web app
-st.set_page_config(
-    page_title="YouTube Video Analyzer",
-    page_icon="📺",
-    layout="wide"
-)
-
-st.title("YouTube Video Analyzer")
-st.sidebar.header("Select Task")
-
-# Sidebar color adjustment
-st.markdown(
-    """
-    <style>
-        div[data-testid="stSidebar"] {
-            background-color: #1f1f1f;
-            color: white;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Main content color adjustment
-st.markdown(
-    """
-    <style>
-        div[data-testid="stBlock"] {
-            color: black;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Function to search for videos and retrieve video details sorted by views
-def search_and_recommend_videos(query, max_results=10):
-    try:
-        response = youtube.search().list(
-            q=query,
-            type="video",
-            part="id,snippet",
-            maxResults=max_results,
-            videoCaption="any",
-            order="viewCount"  # Sort by views
-        ).execute()
-
-        video_details = []
-        for item in response.get("items", []):
-            video_id = item["id"]["videoId"]
-            title = item["snippet"]["title"]
-
-            # Use a separate request to get video statistics and content details
-            video_info = youtube.videos().list(
-                part="statistics,contentDetails,snippet",
-                id=video_id
-            ).execute()
-
-            snippet_info = video_info.get("items", [])[0]["snippet"]
-            statistics_info = video_info.get("items", [])[0]["statistics"]
-            content_details = video_info.get("items", [])[0].get("contentDetails", {})
-
-            likes = int(statistics_info.get("likeCount", 0))
-            views = int(statistics_info.get("viewCount", 0))
-            comments = int(statistics_info.get("commentCount", 0))
-            duration = content_details.get("duration", "N/A")
-            upload_date = snippet_info.get("publishedAt", "N/A")
-            channel_title = snippet_info.get("channelTitle", "N/A")
-            thumbnail_url = snippet_info.get("thumbnails", {}).get("default", {}).get("url", "N/A")
-
-            link = f"https://www.youtube.com/watch?v={video_id}"
-
-            video_details.append((title, video_id, likes, views, comments, duration, upload_date, channel_title, link, thumbnail_url))
-
-        return video_details
-    except googleapiclient.errors.HttpError as e:
-        st.error(f"Error fetching videos: {e}")
-        return []
-
-# Function to fetch video comments using the video ID
-def get_video_comments(video_id):
-    try:
-        comments = []
-        results = youtube.commentThreads().list(
-            part="snippet",
-            videoId=video_id,
-            textFormat="plainText",
-            maxResults=100
-        ).execute()
-
-        while "items" in results:
-            for item in results["items"]:
-                comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-                comments.append(comment)
-            if "nextPageToken" in results:
-                results = youtube.commentThreads().list(
-                    part="snippet",
-                    videoId=video_id,
-                    textFormat="plainText",
-                    maxResults=100,
-                    pageToken=results["nextPageToken"]
-                ).execute()
-            else:
-                break
-
-        return comments
-    except googleapiclient.errors.HttpError as e:
-        st.error(f"Error fetching comments: {e}")
-        return []
-
 # Function for Sentiment Analysis Task
 def sentiment_analysis_task():
     st.subheader("Sentiment Analysis Task")
@@ -544,6 +435,9 @@ def sentiment_analysis_task():
     
     # Input for video ID
     video_id_sentiment = st.sidebar.text_input("Enter Video ID for Sentiment Analysis", value="YOUR_VIDEO_ID")
+
+    # Dropdown to select comment type
+    comment_type = st.sidebar.selectbox("Select Comment Type", ["All", "Positive", "Negative", "Neutral"])
 
     # Button to initiate sentiment analysis
     if st.sidebar.button("Analyze Sentiment"):
@@ -558,81 +452,48 @@ def sentiment_analysis_task():
 
             # Display additional metrics
             st.write(f"Total Comments: {len(comments)}")
-            st.write(f"Average Sentiment Polarity: {sum(s[1] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
-            st.write(f"Average Sentiment Subjectivity: {sum(s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
 
-            # Display sentiment distribution chart
-            sentiment_df = []
-            for sentiment, sentiment_comments in categorized_comments.items():
-                sentiment_df.extend([(sentiment, comment[1], comment[2]) for comment in sentiment_comments])
-
-            sentiment_chart = px.scatter(sentiment_df, x=1, y=2, color=0, labels={'1': 'Polarity', '2': 'Subjectivity'}, title='Sentiment Analysis')
-            st.plotly_chart(sentiment_chart)
+            if comment_type == "All":
+                display_comments = comments
+            else:
+                display_comments = [comment[0] for comment in categorized_comments[comment_type]]
 
             # Display categorized comments
-            for sentiment, sentiment_comments in categorized_comments.items():
-                st.subheader(sentiment)
-                for comment in sentiment_comments:
-                    st.write(comment[0])
+            for comment in display_comments:
+                st.write(comment)
         else:
             st.warning("No comments found for the given video.")
 
-# Function for Named Entity Recognition (NER) Task
-def named_entity_recognition_task():
-    st.subheader("Named Entity Recognition (NER) Task")
-    st.write("This task allows you to perform Named Entity Recognition (NER) on the transcript of a YouTube video.")
+# Function for Word Cloud Task
+def word_cloud_task():
+    st.subheader("Word Cloud Task")
+    st.write("This task allows you to generate a word cloud based on the transcript of a YouTube video.")
     
     # Input for video ID
-    video_id_ner = st.sidebar.text_input("Enter Video ID for NER Task", value="YOUR_VIDEO_ID")
+    video_id_wordcloud = st.sidebar.text_input("Enter Video ID for Word Cloud Task", value="YOUR_VIDEO_ID")
 
-    # Button to initiate NER
-    if st.sidebar.button("Perform NER"):
+    # Button to generate word cloud
+    if st.sidebar.button("Generate Word Cloud"):
         # Call the function to fetch video comments
-        comments_ner = get_video_comments(video_id_ner)
+        comments_wordcloud = get_video_comments(video_id_wordcloud)
 
-        # Check if there are comments before NER
-        if comments_ner:
-            # Concatenate comments into a single text for NER
-            text_for_ner = " ".join(comments_ner)
+        # Check if there are comments before word cloud generation
+        if comments_wordcloud:
+            # Concatenate comments into a single text for word cloud
+            text_for_wordcloud = " ".join(comments_wordcloud)
 
-            # Use the transformers library for NER
-            ner_pipeline = pipeline("ner")
-            entities = ner_pipeline(text_for_ner)
-
-            # Display NER results
-            st.subheader("Named Entity Recognition (NER) Results")
-            for entity in entities:
-                st.write(f"Entity: {entity['word']}, Label: {entity['entity']}, Score: {entity['score']}")
+            # Use the wordcloud library for word cloud generation
+            st.write("Word Cloud:")
+            wordcloud = generate_wordcloud(text_for_wordcloud)
+            st.image(wordcloud.to_image())
         else:
             st.warning("No comments found for the given video.")
 
-# Function for Summary Generation Task
-def summary_generation_task():
-    st.subheader("Summary Generation Task")
-    st.write("This task allows you to generate a summary of the transcript of a YouTube video using transformers.")
-
-    # Input for video ID
-    video_id_summary = st.sidebar.text_input("Enter Video ID for Summary Generation Task", value="YOUR_VIDEO_ID")
-
-    # Button to generate summary
-    if st.sidebar.button("Generate Summary"):
-        # Call the function to fetch video comments
-        comments_summary = get_video_comments(video_id_summary)
-
-        # Check if there are comments before summary generation
-        if comments_summary:
-            # Concatenate comments into a single text for summarization
-            text_for_summary = " ".join(comments_summary)
-
-            # Use the transformers library for summarization
-            summarization_pipeline = pipeline("summarization")
-            summary = summarization_pipeline(text_for_summary, max_length=150, min_length=50, length_penalty=2.0, num_beams=4)
-
-            # Display summary
-            st.subheader("Generated Summary")
-            st.write(summary[0]['summary_text'])
-        else:
-            st.warning("No comments found for the given video.")
+# Function for Abuse and Spam Detection Task
+def abuse_and_spam_detection_task():
+    st.subheader("Abuse and Spam Detection Task")
+    st.write("Implement DL models to detect and filter out abusive or spammy comments, ensuring a more positive user experience on the platform.")
+    st.write("Note: This is a placeholder. Actual implementation requires training a model on labeled data.")
 
 # Placeholder function for keyword extraction
 def extract_keywords(text):
@@ -640,48 +501,18 @@ def extract_keywords(text):
     # For simplicity, this placeholder function just splits the text into words
     return text.split()
 
-# Function for Keyword Extraction Task
-def keyword_extraction_task():
-    st.subheader("Keyword Extraction Task")
-    st.write("This task allows you to extract keywords from the transcript of a YouTube video.")
-
-    # Input for video ID
-    video_id_keywords = st.sidebar.text_input("Enter Video ID for Keyword Extraction Task", value="YOUR_VIDEO_ID")
-
-    # Button to extract keywords
-    if st.sidebar.button("Extract Keywords"):
-        # Call the function to fetch video comments
-        comments_keywords = get_video_comments(video_id_keywords)
-
-        # Check if there are comments before keyword extraction
-        if comments_keywords:
-            # Concatenate comments into a single text for keyword extraction
-            text_for_keywords = " ".join(comments_keywords)
-
-            # Use the placeholder function for keyword extraction
-            keywords = extract_keywords(text_for_keywords)
-
-            # Display keywords
-            st.subheader("Extracted Keywords")
-            st.write(", ".join(keywords))
-        else:
-            st.warning("No comments found for the given video.")
-
 # Function to handle different tasks based on user selection
 def handle_tasks():
-    task = st.sidebar.selectbox("Select Task", ["Video Details Search", "Sentiment Analysis", "NER Task", "Summary Generation Task", "Keyword Extraction Task"])
+    task = st.sidebar.selectbox("Select Task", ["Video Details Search", "Sentiment Analysis", "Word Cloud Task", "Abuse and Spam Detection Task"])
 
     if task == "Video Details Search":
         video_details_search_task()
     elif task == "Sentiment Analysis":
         sentiment_analysis_task()
-    elif task == "NER Task":
-        named_entity_recognition_task()
-    elif task == "Summary Generation Task":
-        summary_generation_task()
-    elif task == "Keyword Extraction Task":
-        keyword_extraction_task()
+    elif task == "Word Cloud Task":
+        word_cloud_task()
+    elif task == "Abuse and Spam Detection Task":
+        abuse_and_spam_detection_task()
 
 # Execute the main tasks
 handle_tasks()
-
