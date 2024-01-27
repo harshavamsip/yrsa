@@ -163,7 +163,7 @@ if st.sidebar.button("Analyze Sentiment"):
             st.subheader(sentiment)
             for comment in sentiment
 
-_comments:
+
                 st.write(f"- *Polarity*: {comment[1]}, *Subjectivity*: {comment[2]}")
                 st.write(f"  {comment[0]}")
 
@@ -279,3 +279,4 @@ torch==1.10.1
 # Run the app
 if __name__ == "__main__":
     st.run_app()
+
