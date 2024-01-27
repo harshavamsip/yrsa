@@ -1,19 +1,9 @@
-
-
-import os
-import numpy as np
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
 import plotly.express as px
-from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.pipeline import make_pipeline
 from transformers import pipeline
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+import profanity_check
 
 # Set your YouTube Data API key here
 YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
@@ -21,15 +11,6 @@ YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
 
-# Set up transformers pipeline for summary generation
-summarization_pipeline = pipeline("summarization")
-
-# Streamlit web app
-st.set_page_config(
-    page_title="YouTube Video Analyzer",
-    page_icon="📺",
-    layout="wide"
-)
 # Function to search for videos and retrieve video details sorted by views
 def search_and_recommend_videos(query, max_results=10):
     try:
@@ -107,7 +88,6 @@ def get_video_comments(video_id):
 
 # Placeholder function for sentiment analysis
 def analyze_and_categorize_comments(comments):
-    # Replace this placeholder with your actual sentiment analysis logic
     categorized_comments = {'Positive': [], 'Negative': [], 'Neutral': []}
     for comment in comments:
         analysis = TextBlob(comment)
@@ -123,54 +103,121 @@ def analyze_and_categorize_comments(comments):
 
     return categorized_comments
 
-# Function to filter comments based on sentiment
-def filter_comments_by_sentiment(comments, sentiment):
-    filtered_comments = [comment for comment in comments if analyze_sentiment(comment) == sentiment]
-    return filtered_comments
+# Function to check profanity in comments
+def check_profanity(comments):
+    try:
+        profanity_predictions = profanity_check.predict(comments)
+        return profanity_predictions
+    except Exception as e:
+        st.error(f"Error checking profanity: {e}")
+        return []
 
-# Function to analyze sentiment of a single comment
-def analyze_sentiment(comment):
-    analysis = TextBlob(comment)
-    polarity = analysis.sentiment.polarity
-    if polarity > 0:
-        return 'Positive'
-    elif polarity < 0:
-        return 'Negative'
-    else:
-        return 'Neutral'
+# Streamlit web app
+st.set_page_config(
+    page_title="YouTube Video Analyzer",
+    page_icon="📺",
+    layout="wide"
+)
+
+st.title("YouTube Video Analyzer")
+st.sidebar.header("Select Task")
+
+tasks = ["Search Video Details", "Sentiment Analysis", "Profanity Check", "Word Cloud", "Named Entity Recognition (NER)", "Summary Generation", "Abuse and Spam Detection"]
+task = st.sidebar.selectbox("Task", tasks)
 
 # Function to generate word cloud from comments
-def generate_wordcloud(comments):
-    text = ' '.join(comments)
-    wordcloud = WordCloud(width=800, height=400, random_state=21, max_font_size=110, background_color='white').generate(text)
-    plt.figure(figsize=(10, 7))
-    plt.imshow(wordcloud, interpolation="bilinear")
-    plt.axis('off')
-    st.pyplot(plt)
+def generate_word_cloud(comments):
+    try:
+        from wordcloud import WordCloud
+        import matplotlib.pyplot as plt
 
-# Function to perform abuse and spam detection
+        # Combine all comments into a single string
+        text = " ".join(comments)
+
+        # Generate word cloud
+        wordcloud = WordCloud(width=800, height=400, max_words=200, background_color="white").generate(text)
+
+        # Display the word cloud using matplotlib
+        plt.figure(figsize=(10, 5))
+        plt.imshow(wordcloud, interpolation="bilinear")
+        plt.axis("off")
+        plt.show()
+
+        # Display the word cloud using Streamlit
+        st.image(wordcloud.to_image())
+    except Exception as e:
+        st.error(f"Error generating word cloud: {e}")
+
+# Function for named entity recognition (NER)
+def perform_ner(comments):
+    try:
+        import spacy
+        from spacy import displacy
+
+        # Load the spaCy English model
+        nlp = spacy.load("en_core_web_sm")
+
+        # Combine all comments into a single string
+        text = " ".join(comments)
+
+        # Process the text with spaCy NLP pipeline
+        doc = nlp(text)
+
+        # Render named entities using spaCy's displacy
+        st.subheader("Named Entity Recognition (NER)")
+        st.markdown("Named Entity Recognition (NER) identifies entities (e.g., names of people, organizations, locations) in the text.")
+        st.markdown("Here is a visualization of named entities in the comments:")
+        st.write(displacy.render(doc, style="ent", jupyter=False))
+    except Exception as e:
+        st.error(f"Error performing Named Entity Recognition (NER): {e}")
+
+# Function for summary generation using Transformers
+def generate_summary(text):
+    try:
+        summarization_pipeline = pipeline("summarization")
+        summary = summarization_pipeline(text, max_length=150, min_length=50, length_penalty=2.0, num_beams=4)
+        st.subheader("Summary Generation")
+        st.markdown("Summary generation provides a concise representation of the main content.")
+        st.markdown("Generated Summary:")
+        st.write(summary[0]['summary_text'])
+    except Exception as e:
+        st.error(f"Error generating summary: {e}")
+
+# Function for abuse and spam detection using DL models
 def abuse_and_spam_detection(comments):
-    # Replace this with your actual abuse and spam detection logic
-    # For now, using a placeholder function
-    labels = [predict([comment]) for comment in comments]
-    return labels
+    # Placeholder function for abuse and spam detection
+    st.warning("Abuse and Spam Detection: This feature is under development.")
 
-# Function to display results of abuse and spam detection
-def display_abuse_and_spam_results(labels, comments):
-    st.subheader("Abuse and Spam Detection Results")
-    st.write("Number of comments analyzed:", len(comments))
-    st.write("Abusive/Spam Comments:")
-    for label, comment in zip(labels, comments):
-        if label == 1:
-            st.write(comment)
+# Handle tasks based on user selection
+def handle_tasks():
+    if task == "Search Video Details":
+        video_details_search_task()
 
-# Task 1: Search Video Details
+    elif task == "Sentiment Analysis":
+        video_sentiment_analysis_task()
+
+    elif task == "Profanity Check":
+        profanity_check_task()
+
+    elif task == "Word Cloud":
+        word_cloud_task()
+
+    elif task == "Named Entity Recognition (NER)":
+        ner_task()
+
+    elif task == "Summary Generation":
+        summary_generation_task()
+
+    elif task == "Abuse and Spam Detection":
+        abuse_and_spam_detection_task()
+
 def video_details_search_task():
-    st.sidebar.header("Task 1: Search Video Details")
-    st.sidebar.subheader("Enter Search Query:")
-    search_query = st.sidebar.text_input("", value="Python Tutorial")
+    # Implementation for the "Search Video Details" task
+    st.subheader("Search Video Details")
+    st.markdown("Enter the topic of interest below to search for relevant YouTube videos.")
+    search_query = st.text_input("Enter the topic of interest", value="Python Tutorial")
 
-    if st.sidebar.button("Search"):
+    if st.button("Search"):
         video_details = search_and_recommend_videos(search_query)
         st.subheader("Search Results:")
         if video_details:
@@ -183,118 +230,105 @@ def video_details_search_task():
                 st.write(f"Channel: {video[7]}")
                 st.write(f"Watch Video: [Link]({video[8]})")
 
-# Task 2: Sentiment Analysis
-def sentiment_analysis_task():
-    st.sidebar.header("Task 2: Sentiment Analysis")
-    st.sidebar.subheader("Enter Video ID:")
-    video_id_sentiment = st.sidebar.text_input("", value="YOUR_VIDEO_ID")
+def video_sentiment_analysis_task():
+    # Implementation for the "Sentiment Analysis" task
+    st.subheader("Sentiment Analysis")
+    st.markdown("Analyze the sentiment of comments for a given YouTube video. Enter the video ID below.")
 
-    if st.sidebar.button("Analyze Sentiment"):
-        comments_sentiment = get_video_comments(video_id_sentiment)
+    video_id = st.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
+
+    if st.button("Analyze Sentiment"):
+        comments = get_video_comments(video_id)
         st.subheader("Sentiment Analysis")
 
-        # Check if there are comments before analysis
-        if comments_sentiment:
-            # Provide options to filter comments
-            sentiment_option = st.radio("Filter Comments By Sentiment:", options=["All", "Positive", "Negative", "Neutral"], index=0)
-
-            # Filter comments based on sentiment option
-            if sentiment_option == "All":
-                display_comments = comments_sentiment
-            else:
-                display_comments = filter_comments_by_sentiment(comments_sentiment, sentiment_option.lower())
+        if comments:
+            categorized_comments = analyze_and_categorize_comments(comments)
+            st.write(f"Total Comments: {len(comments)}")
+            st.write(f"Average Sentiment Polarity: {sum(s[1] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
+            st.write(f"Average Sentiment Subjectivity: {sum(s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
 
             # Display sentiment distribution chart
             sentiment_df = []
-            for sentiment, sentiment_comments in analyze_and_categorize_comments(display_comments).items():
+            for sentiment, sentiment_comments in categorized_comments.items():
                 sentiment_df.extend([(sentiment, comment[1], comment[2]) for comment in sentiment_comments])
 
             sentiment_chart = px.scatter(sentiment_df, x=1, y=2, color=0, labels={'1': 'Polarity', '2': 'Subjectivity'}, title='Sentiment Analysis')
             st.plotly_chart(sentiment_chart)
 
             # Display categorized comments
-            for sentiment, sentiment_comments in analyze_and_categorize_comments(display_comments).items():
+            for sentiment, sentiment_comments in categorized_comments.items():
                 st.subheader(sentiment)
                 for comment in sentiment_comments:
                     st.write(comment[0])
         else:
             st.warning("No comments found for the given video.")
 
-# Task 3: Word Cloud Generation
-def wordcloud_generation_task():
-    st.sidebar.header("Task 3: Word Cloud Generation")
-    st.sidebar.subheader("Enter Video ID:")
-    video_id_wordcloud = st.sidebar.text_input("", value="YOUR_VIDEO_ID")
+def profanity_check_task():
+    # Implementation for the "Profanity Check" task
+    st.subheader("Profanity Check")
+    st.markdown("Check for profanity in comments for a given YouTube video. Enter the video ID below.")
 
-    if st.sidebar.button("Generate Word Cloud"):
-        comments_wordcloud = get_video_comments(video_id_wordcloud)
-        st.subheader("Word Cloud Generation")
+    video_id = st.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
 
-        # Check if there are comments before generating word cloud
-        if comments_wordcloud:
-            generate_wordcloud(comments_wordcloud)
+    if st.button("Check Profanity"):
+        comments = get_video_comments(video_id)
+        if comments:
+            profanity_predictions = check_profanity(comments)
+            st.subheader("Profanity Check Results")
+
+            for i, prediction in enumerate(profanity_predictions):
+                st.write(f"Comment {i + 1}: {'Profane' if prediction else 'Not Profane'}")
         else:
             st.warning("No comments found for the given video.")
 
-# Task 4: Abuse and Spam Detection
-def abuse_and_spam_detection_task():
-    st.sidebar.header("Task 4: Abuse and Spam Detection")
-    st.sidebar.subheader("Enter Video ID:")
-    video_id_abuse_spam = st.sidebar.text_input("", value="YOUR_VIDEO_ID")
+def word_cloud_task():
+    # Implementation for the "Word Cloud" task
+    st.subheader("Word Cloud")
+    st.markdown("Generate a word cloud from comments for a given YouTube video. Enter the video ID below.")
 
-    if st.sidebar.button("Detect Abuse and Spam"):
-        comments_abuse_spam = get_video_comments(video_id_abuse_spam)
-        st.subheader("Abuse and Spam Detection")
+    video_id = st.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
 
-        # Check if there are comments before abuse and spam detection
-        if comments_abuse_spam:
-            labels_abuse_spam = abuse_and_spam_detection(comments_abuse_spam)
-            display_abuse_and_spam_results(labels_abuse_spam, comments_abuse_spam)
+    if st.button("Generate Word Cloud"):
+        comments = get_video_comments(video_id)
+        if comments:
+            generate_word_cloud(comments)
         else:
             st.warning("No comments found for the given video.")
 
-# Task 5: Summary Generation
+def ner_task():
+    # Implementation for the "Named Entity Recognition (NER)" task
+    st.subheader("Named Entity Recognition (NER)")
+    st.markdown("Perform Named Entity Recognition (NER) on comments for a given YouTube video. Enter the video ID below.")
+
+    video_id = st.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
+
+    if st.button("Perform NER"):
+        comments = get_video_comments(video_id)
+        if comments:
+            perform_ner(comments)
+        else:
+            st.warning("No comments found for the given video.")
+
 def summary_generation_task():
-    st.sidebar.header("Task 5: Summary Generation")
-    st.sidebar.subheader("Enter Video ID:")
-    video_id_summary = st.sidebar.text_input("", value="YOUR_VIDEO_ID")
+    # Implementation for the "Summary Generation" task
+    st.subheader("Summary Generation Task")
+    st.markdown("Generate a summary of the transcript of a YouTube video using transformers.")
 
-    if st.sidebar.button("Generate Summary"):
-        comments_summary = get_video_comments(video_id_summary)
-        st.subheader("Summary Generation")
+    video_id = st.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
 
-        # Check if there are comments before summary generation
-        if comments_summary:
-            # Use the first comment as input for summary generation
-            text_for_summary = comments_summary[0]
-            summary = summarization_pipeline(text_for_summary, max_length=150, min_length=50, length_penalty=2.0, num_beams=4)
-            st.write("Original Text:")
-            st.write(text_for_summary)
-            st.write("Generated Summary:")
-            st.write(summary[0]['summary_text'])
+    if st.button("Generate Summary"):
+        comments = get_video_comments(video_id)
+        if comments:
+            text_for_summary = " ".join(comments)
+            generate_summary(text_for_summary)
         else:
             st.warning("No comments found for the given video.")
 
-# Function to handle different tasks based on user selection
-def handle_tasks():
-    st.title("YouTube Video Analyzer")
+def abuse_and_spam_detection_task():
+    # Implementation for the "Abuse and Spam Detection" task
+    st.subheader("Abuse and Spam Detection")
+    st.warning("Abuse and Spam Detection: This feature is under development.")
 
-    task_options = ["Search Video Details", "Sentiment Analysis", "Word Cloud Generation", "Abuse and Spam Detection", "Summary Generation"]
-    task = st.sidebar.selectbox("Select Task", task_options)
-
-    if task == task_options[0]:
-        video_details_search_task()
-    elif task == task_options[1]:
-        sentiment_analysis_task()
-    elif task == task_options[2]:
-        wordcloud_generation_task()
-    elif task == task_options[3]:
-        abuse_and_spam_detection_task()
-    elif task == task_options[4]:
-        summary_generation_task()
-
-# Run the app
-if __name__ == '__main__':
+# Main app execution
+if __name__ == "__main__":
     handle_tasks()
-
-
