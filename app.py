@@ -6,6 +6,8 @@ import plotly.express as px
 from profanity_check import predict
 from wordcloud import WordCloud
 from transformers import pipeline
+import joblib
+
 
 # Set your YouTube Data API key here
 YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
