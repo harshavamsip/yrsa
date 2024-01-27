@@ -1,3 +1,5 @@
+
+
 import os
 import numpy as np
 import streamlit as st
@@ -19,17 +21,6 @@ YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
 
-# Load the pre-trained profanity check model
-model_path = os.path.join(os.path.dirname(__file__), 'profanity_check_model', 'model.joblib')
-gbc = joblib.load(model_path)
-
-# Create a vectorizer to convert input text into feature vectors
-vec = joblib.load(os.path.join(os.path.dirname(__file__), 'profanity_check_model', 'vectorizer.joblib'))
-
-# Load the feature names
-feature_names_path = os.path.join(os.path.dirname(__file__), 'profanity_check_model', 'feature_names.npy')
-feature_names = np.load(feature_names_path)
-
 # Set up transformers pipeline for summary generation
 summarization_pipeline = pipeline("summarization")
 
@@ -39,7 +30,6 @@ st.set_page_config(
     page_icon="📺",
     layout="wide"
 )
-
 # Function to search for videos and retrieve video details sorted by views
 def search_and_recommend_videos(query, max_results=10):
     try:
