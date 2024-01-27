@@ -374,13 +374,13 @@
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
-import plotly.express as px
 from wordcloud import WordCloud
+import plotly.express as px
 from nltk.corpus import stopwords
 from transformers import pipeline
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY =  "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
+YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -477,7 +477,7 @@ def analyze_and_categorize_comments(comments):
 
     return categorized_comments
 
-# Function to perform keyword extraction and generate word cloud
+# Function for Keyword Extraction and Word Cloud Generation
 def analyze_and_visualize_keywords(comments):
     try:
         all_comments_text = ' '.join(comments)
@@ -500,7 +500,7 @@ def perform_ner_on_comments(comments):
 
         st.subheader("Named Entity Recognition (NER) Results")
         for entity in entities:
-            st.write(f"Entity: {entity['word']}, Label: {entity['entity']}, Score: {entity['score']}")
+            st.write(f"Entity: {entity['word']}, Type: {entity['entity']}, Score: {entity['score']}")
     except Exception as e:
         st.error(f"Error during Named Entity Recognition (NER): {e}")
 
@@ -526,9 +526,10 @@ st.set_page_config(
 st.title("YouTube Video Analyzer")
 st.sidebar.header("Select Task")
 
-task = st.sidebar.selectbox("Task", ["Search Video Details", "Sentiment Analysis"])
+categories = ["Video Details", "Sentiment Analysis", "Keyword Extraction and Word Cloud", "Named Entity Recognition (NER)", "Summary Generation"]
+task_category = st.sidebar.selectbox("Select Task Category", categories)
 
-if task == "Search Video Details":
+if task_category == "Video Details":
     search_query = st.sidebar.text_input("Enter the topic of interest", value="Python Tutorial")
 
     if st.sidebar.button("Search"):
@@ -544,7 +545,7 @@ if task == "Search Video Details":
                 st.write(f"Channel: {video[7]}")
                 st.write(f"Watch Video: [Link]({video[8]})")
 
-if task == "Sentiment Analysis":
+elif task_category == "Sentiment Analysis":
     video_id = st.sidebar.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
 
     if st.sidebar.button("Analyze Sentiment"):
@@ -570,8 +571,20 @@ if task == "Sentiment Analysis":
                 for comment in sentiment_comments:
                     st.write(comment[0])
 
-            analyze_and_visualize_keywords(comments)
-            perform_ner_on_comments(comments)
-            generate_summary(comments)
         else:
             st.warning("No comments found for the given video.")
+
+elif task_category == "Keyword Extraction and Word Cloud":
+    if st.sidebar.button("Generate Word Cloud"):
+        comments = get_video_comments("YOUR_VIDEO_ID")  # Replace with a valid video ID
+        analyze_and_visualize_keywords(comments)
+
+elif task_category == "Named Entity Recognition (NER)":
+    if st.sidebar.button("Perform NER"):
+        comments = get_video_comments("YOUR_VIDEO_ID")  # Replace with a valid video ID
+        perform_ner_on_comments(comments)
+
+elif task_category == "Summary Generation":
+    if st.sidebar.button("Generate Summary"):
+        comments = get_video_comments("YOUR_VIDEO_ID")  # Replace with a valid video ID
+        generate_summary(comments)
