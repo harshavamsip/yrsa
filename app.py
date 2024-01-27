@@ -5,13 +5,16 @@ import googleapiclient.discovery
 from textblob import TextBlob
 import plotly.express as px
 from profanity_check import predict
-import joblib
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline
 from transformers import pipeline
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
 # Set your YouTube Data API key here
-YOUTUBE_API_KEY =  "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
+YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
@@ -166,15 +169,17 @@ def abuse_and_spam_detection(comments):
 def display_abuse_and_spam_results(labels, comments):
     st.subheader("Abuse and Spam Detection Results")
     st.write("Number of comments analyzed:", len(comments))
-    st.write("Abusive/Spam comments detected:", sum(labels))
-    st.write("Percentage of Abusive/Spam comments:", (sum(labels) / len(comments)) * 100)
+    st.write("Abusive/Spam Comments:")
+    for label, comment in zip(labels, comments):
+        if label == 1:
+            st.write(comment)
 
 # Task 1: Search Video Details
 def video_details_search_task():
     st.sidebar.header("Task 1: Search Video Details")
-    st.sidebar.subheader("Enter the topic of interest:")
+    st.sidebar.subheader("Enter Search Query:")
     search_query = st.sidebar.text_input("", value="Python Tutorial")
-    
+
     if st.sidebar.button("Search"):
         video_details = search_and_recommend_videos(search_query)
         st.subheader("Search Results:")
@@ -301,4 +306,5 @@ def handle_tasks():
 # Run the app
 if __name__ == '__main__':
     handle_tasks()
+
 
