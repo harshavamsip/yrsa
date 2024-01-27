@@ -131,30 +131,35 @@ if task == "Search Video Details":
                 st.write(f"Watch Video: [Link]({video[8]})")
 
 if task == "Sentiment Analysis":
-    video_id = st.sidebar.text_input("Enter Video ID")
+    # Provide a valid video ID or update the input method based on your needs
+    video_id = st.sidebar.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
 
     if st.sidebar.button("Analyze Sentiment"):
         comments = get_video_comments(video_id)
         st.subheader("Sentiment Analysis")
 
-        # Use the placeholder function for sentiment analysis
-        categorized_comments = analyze_and_categorize_comments(comments)
+        # Check if there are comments before analysis
+        if comments:
+            # Use the placeholder function for sentiment analysis
+            categorized_comments = analyze_and_categorize_comments(comments)
 
-        # Display additional metrics
-        st.write(f"Total Comments: {len(comments)}")
-        st.write(f"Average Sentiment Polarity: {sum(s[1] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
-        st.write(f"Average Sentiment Subjectivity: {sum(s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
+            # Display additional metrics
+            st.write(f"Total Comments: {len(comments)}")
+            st.write(f"Average Sentiment Polarity: {sum(s[1] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
+            st.write(f"Average Sentiment Subjectivity: {sum(s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
 
-        # Display sentiment distribution chart
-        sentiment_df = []
-        for sentiment, sentiment_comments in categorized_comments.items():
-            sentiment_df.extend([(sentiment, comment[1], comment[2]) for comment in sentiment_comments])
+            # Display sentiment distribution chart
+            sentiment_df = []
+            for sentiment, sentiment_comments in categorized_comments.items():
+                sentiment_df.extend([(sentiment, comment[1], comment[2]) for comment in sentiment_comments])
 
-        sentiment_chart = px.scatter(sentiment_df, x=1, y=2, color=0, labels={'1': 'Polarity', '2': 'Subjectivity'}, title='Sentiment Analysis')
-        st.plotly_chart(sentiment_chart)
+            sentiment_chart = px.scatter(sentiment_df, x=1, y=2, color=0, labels={'1': 'Polarity', '2': 'Subjectivity'}, title='Sentiment Analysis')
+            st.plotly_chart(sentiment_chart)
 
-        # Display categorized comments
-        for sentiment, sentiment_comments in categorized_comments.items():
-            st.subheader(sentiment)
-            for comment in sentiment_comments:
-                st.write(comment[0])
+            # Display categorized comments
+            for sentiment, sentiment_comments in categorized_comments.items():
+                st.subheader(sentiment)
+                for comment in sentiment_comments:
+                    st.write(comment[0])
+        else:
+            st.warning("No comments found for the given video.")
