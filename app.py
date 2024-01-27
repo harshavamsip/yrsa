@@ -4,7 +4,6 @@ import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
 import plotly.express as px
-from profanity_check import predict
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
@@ -12,6 +11,7 @@ from sklearn.pipeline import make_pipeline
 from transformers import pipeline
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 
 # Set your YouTube Data API key here
 YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
