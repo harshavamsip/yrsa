@@ -1,8 +1,6 @@
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
 import plotly.express as px
 
 # Set your YouTube Data API key here
@@ -86,21 +84,6 @@ def get_video_comments(video_id):
         st.error(f"Error fetching comments: {e}")
         return []
 
-# Function to generate a word cloud from comments
-def generate_word_cloud(comments):
-    if not comments:
-        st.warning("No comments found for the given video.")
-        return
-
-    all_comments = ' '.join(comments)
-    wordcloud = WordCloud(width=800, height=400, background_color='white', collocations=False).generate(all_comments)
-
-    # Display Word Cloud using Matplotlib
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    st.pyplot(plt)
-
 # Placeholder function for sentiment analysis
 def analyze_and_categorize_comments(comments):
     # Replace this placeholder with your actual sentiment analysis logic
@@ -129,7 +112,7 @@ st.set_page_config(
 st.title("YouTube Video Analyzer")
 st.sidebar.header("Select Task")
 
-task = st.sidebar.selectbox("Task", ["Search Video Details", "Sentiment Analysis", "Generate Word Cloud"])
+task = st.sidebar.selectbox("Task", ["Search Video Details", "Sentiment Analysis"])
 
 if task == "Search Video Details":
     search_query = st.sidebar.text_input("Enter the topic of interest", value="Python Tutorial")
@@ -175,11 +158,3 @@ if task == "Sentiment Analysis":
             st.subheader(sentiment)
             for comment in sentiment_comments:
                 st.write(comment[0])
-
-if task == "Generate Word Cloud":
-    video_id = st.sidebar.text_input("Enter Video ID")
-
-    if st.sidebar.button("Generate Word Cloud"):
-        comments = get_video_comments(video_id)
-        st.subheader("Word Cloud")
-        generate_word_cloud(comments)
