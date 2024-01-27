@@ -170,16 +170,15 @@ import googleapiclient.discovery
 from transformers import pipeline
 from textblob import TextBlob
 import plotly.express as px
-import speech_recognition as sr
-import moviepy.editor as mp
-from profanity_check import predict
-import os
 
 # Set your YouTube Data API key here
 YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
 
 # Initialize the YouTube Data API client
 youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+
+# Initialize the summarization pipeline
+summarizer = pipeline("summarization")
 
 # Function to search for videos and retrieve video details sorted by views
 def search_and_recommend_videos(query, max_results=10):
@@ -225,104 +224,14 @@ def search_and_recommend_videos(query, max_results=10):
         st.error(f"Error fetching videos: {e}")
         return []
 
-# Function to fetch video comments using the video ID
-def get_video_comments(video_id):
+# Function for content summarization
+def summarize_content(text):
     try:
-        comments = []
-        results = youtube.commentThreads().list(
-            part="snippet",
-            videoId=video_id,
-            textFormat="plainText",
-            maxResults=100
-        ).execute()
-
-        while "items" in results:
-            for item in results["items"]:
-                comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-                comments.append(comment)
-            if "nextPageToken" in results:
-                results = youtube.commentThreads().list(
-                    part="snippet",
-                    videoId=video_id,
-                    textFormat="plainText",
-                    maxResults=100,
-                    pageToken=results["nextPageToken"]
-                ).execute()
-            else:
-                break
-
-        return comments
-    except googleapiclient.errors.HttpError as e:
-        st.error(f"Error fetching comments: {e}")
-        return []
-
-# Placeholder function for sentiment analysis
-def analyze_and_categorize_comments(comments):
-    categorized_comments = {'Positive': [], 'Negative': [], 'Neutral': []}
-    for comment in comments:
-        analysis = TextBlob(comment)
-        polarity = analysis.sentiment.polarity
-        subjectivity = analysis.sentiment.subjectivity
-
-        if polarity > 0:
-            categorized_comments['Positive'].append((comment, polarity, subjectivity))
-        elif polarity < 0:
-            categorized_comments['Negative'].append((comment, polarity, subjectivity))
-        else:
-            categorized_comments['Neutral'].append((comment, polarity, subjectivity))
-
-    return categorized_comments
-
-# New function for content summarization using transformers library (BART model)
-def generate_video_summary(video_details):
-    summarization_pipeline = pipeline("summarization", model="facebook/bart-large-cnn")
-    summaries = []
-    for video in video_details:
-        summary = summarization_pipeline(video[0], max_length=150, min_length=50, length_penalty=2.0, num_beams=4, early_stopping=True)
-        summaries.append((video[0], summary[0]['summary_text']))
-    return summaries
-
-# New function for automatic transcription and speech recognition
-def transcribe_and_recognize(video_url):
-    recognizer = sr.Recognizer()
-    
-    # Use moviepy to extract audio from the video
-    video_clip = mp.VideoFileClip(video_url)
-    audio_clip = video_clip.audio
-
-    # Save the audio as a temporary file
-    audio_path = "temp_audio.wav"
-    audio_clip.write_audiofile(audio_path)
-
-    # Perform speech recognition on the audio file using Google Cloud Speech API
-    client = speech.SpeechClient()
-
-    with sr.AudioFile(audio_path) as source:
-        audio_data = recognizer.record(source)
-
-    transcription_config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=audio_data.sample_rate,
-        language_code="en-US",
-    )
-
-    audio = speech.RecognitionAudio(content=audio_data.frame_data.tobytes())
-    response = client.recognize(config=transcription_config, audio=audio)
-
-    transcription = ""
-    for result in response.results:
-        transcription += result.alternatives[0].transcript + " "
-
-    # Clean up: remove temporary audio file
-    os.remove(audio_path)
-
-    return transcription
-
-# New function for abuse and spam detection
-def detect_abuse_and_spam(comments):
-    predictions = predict(comments)
-    filtered_comments = [comment for i, comment in enumerate(comments) if not predictions[i]]
-    return filtered_comments
+        summary = summarizer(text, max_length=150, min_length=30, length_penalty=2.0)[0]['summary_text']
+        return summary
+    except Exception as e:
+        st.error(f"Error summarizing content: {e}")
+        return "N/A"
 
 # Streamlit web app
 st.set_page_config(
@@ -334,8 +243,7 @@ st.set_page_config(
 st.title("YouTube Video Analyzer")
 st.sidebar.header("Select Task")
 
-task = st.sidebar.selectbox("Task", ["Search Video Details", "Sentiment Analysis", "Content Summarization",
-                                      "Transcription and Speech Recognition", "Abuse and Spam Detection"])
+task = st.sidebar.selectbox("Task", ["Search Video Details", "Sentiment Analysis", "Content Summarization"])
 
 if task == "Search Video Details":
     search_query = st.sidebar.text_input("Enter the topic of interest", value="Python Tutorial")
@@ -354,21 +262,24 @@ if task == "Search Video Details":
                 st.write(f"Watch Video: [Link]({video[8]})")
 
 if task == "Sentiment Analysis":
-    video_input = st.sidebar.text_input("Enter Video ID or URL", value="YOUR_VIDEO_ID_OR_URL")
+    # Provide a valid video ID or update the input method based on your needs
+    video_id = st.sidebar.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
 
     if st.sidebar.button("Analyze Sentiment"):
-        # Extract video ID from the input (assuming it can be either ID or URL)
-        video_id = get_video_id(video_input)
         comments = get_video_comments(video_id)
         st.subheader("Sentiment Analysis")
 
+        # Check if there are comments before analysis
         if comments:
+            # Use the placeholder function for sentiment analysis
             categorized_comments = analyze_and_categorize_comments(comments)
 
+            # Display additional metrics
             st.write(f"Total Comments: {len(comments)}")
             st.write(f"Average Sentiment Polarity: {sum(s[1] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
             st.write(f"Average Sentiment Subjectivity: {sum(s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
 
+            # Display sentiment distribution chart
             sentiment_df = []
             for sentiment, sentiment_comments in categorized_comments.items():
                 sentiment_df.extend([(sentiment, comment[1], comment[2]) for comment in sentiment_comments])
@@ -376,6 +287,7 @@ if task == "Sentiment Analysis":
             sentiment_chart = px.scatter(sentiment_df, x=1, y=2, color=0, labels={'1': 'Polarity', '2': 'Subjectivity'}, title='Sentiment Analysis')
             st.plotly_chart(sentiment_chart)
 
+            # Display categorized comments
             for sentiment, sentiment_comments in categorized_comments.items():
                 st.subheader(sentiment)
                 for comment in sentiment_comments:
@@ -383,38 +295,26 @@ if task == "Sentiment Analysis":
         else:
             st.warning("No comments found for the given video.")
 
-# New task: Content Summarization
 if task == "Content Summarization":
-    st.sidebar.subheader("Content Summarization Task")
-    if st.sidebar.button("Generate Video Summaries"):
-        video_summaries = generate_video_summary(video_details)
-        st.subheader("Generated Video Summaries:")
-        if video_summaries:
-            for video, summary in video_summaries:
-                st.write(f"**{video}**")
-                st.write(f"Summary: {summary}")
+    # Provide a valid video ID or update the input method based on your needs
+    video_id = st.sidebar.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
 
-# New task: Transcription and Speech Recognition
-if task == "Transcription and Speech Recognition":
-    st.sidebar.subheader("Transcription and Speech Recognition Task")
-    video_input = st.sidebar.text_input("Enter Video ID or URL for Transcription", value="YOUR_VIDEO_ID_OR_URL")
-    if st.sidebar.button("Transcribe and Recognize Speech"):
-        # Extract video ID from the input (assuming it can be either ID or URL)
-        video_id = get_video_id(video_input)
-        transcription = transcribe_and_recognize(video_id)
-        st.subheader("Transcription and Speech Recognition Result:")
-        st.write(f"Transcription: {transcription}")
-
-# New task: Abuse and Spam Detection
-if task == "Abuse and Spam Detection":
-    st.sidebar.subheader("Abuse and Spam Detection Task")
-    video_input = st.sidebar.text_input("Enter Video ID or URL for Abuse Detection", value="YOUR_VIDEO_ID_OR_URL")
-    if st.sidebar.button("Detect Abuse and Spam"):
-        # Extract video ID from the input (assuming it can be either ID or URL)
-        video_id = get_video_id(video_input)
+    if st.sidebar.button("Summarize Content"):
         comments = get_video_comments(video_id)
-        filtered_comments = detect_abuse_and_spam(comments)
-        st.subheader("Filtered Comments (Abuse/Spam Removed):")
-        for comment in filtered_comments:
-            st.write(comment)
+        st.subheader("Content Summarization")
 
+        # Check if there are comments before summarization
+        if comments:
+            # Concatenate comments for summarization
+            content_to_summarize = ". ".join(comments)
+
+            # Use the content summarization function
+            summary = summarize_content(content_to_summarize)
+
+            # Display the original content and the summary
+            st.write("Original Content:")
+            st.write(content_to_summarize)
+            st.write("\nSummarized Content:")
+            st.write(summary)
+        else:
+            st.warning("No comments found for the given video.")
