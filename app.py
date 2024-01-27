@@ -370,14 +370,11 @@
 #             st.warning("No comments found for the given video.")
 
 
-
 import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
-from wordcloud import WordCloud
 import plotly.express as px
-from nltk.corpus import stopwords
-from transformers import pipeline
+from profanity_check import predict
 
 # Set your YouTube Data API key here
 YOUTUBE_API_KEY = "AIzaSyDm2xduRiZ1bsm9T7QjWehmNE95_4WR9KY"
@@ -432,6 +429,7 @@ def search_and_recommend_videos(query, max_results=10):
 # Function to fetch video comments using the video ID
 def get_video_comments(video_id):
     try:
+        st.write(f"Fetching comments for video ID: {video_id}")  # Debugging statement
         comments = []
         results = youtube.commentThreads().list(
             part="snippet",
@@ -462,6 +460,7 @@ def get_video_comments(video_id):
 
 # Placeholder function for sentiment analysis
 def analyze_and_categorize_comments(comments):
+    # Replace this placeholder with your actual sentiment analysis logic
     categorized_comments = {'Positive': [], 'Negative': [], 'Neutral': []}
     for comment in comments:
         analysis = TextBlob(comment)
@@ -477,45 +476,6 @@ def analyze_and_categorize_comments(comments):
 
     return categorized_comments
 
-# Function for Keyword Extraction and Word Cloud Generation
-def analyze_and_visualize_keywords(comments):
-    try:
-        all_comments_text = ' '.join(comments)
-        stop_words = set(stopwords.words('english'))
-        all_comments_text = ' '.join([word for word in all_comments_text.split() if word.lower() not in stop_words])
-
-        wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_comments_text)
-
-        st.subheader("Word Cloud")
-        st.image(wordcloud.to_array(), use_container_width=True)
-    except Exception as e:
-        st.error(f"Error during keyword extraction and word cloud generation: {e}")
-
-# Function for Named Entity Recognition (NER)
-def perform_ner_on_comments(comments):
-    try:
-        all_comments_text = ' '.join(comments)
-        ner_pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english")
-        entities = ner_pipeline(all_comments_text)
-
-        st.subheader("Named Entity Recognition (NER) Results")
-        for entity in entities:
-            st.write(f"Entity: {entity['word']}, Type: {entity['entity']}, Score: {entity['score']}")
-    except Exception as e:
-        st.error(f"Error during Named Entity Recognition (NER): {e}")
-
-# Function for Summary Generation using Transformers
-def generate_summary(comments):
-    try:
-        all_comments_text = ' '.join(comments)
-        summarization_pipeline = pipeline("summarization", model="t5-base", tokenizer="t5-base")
-        summary = summarization_pipeline(all_comments_text, max_length=150, min_length=50, length_penalty=2.0, num_beams=4)
-
-        st.subheader("Summary Generation using Transformers")
-        st.write(summary[0]['summary_text'])
-    except Exception as e:
-        st.error(f"Error during summary generation using Transformers: {e}")
-
 # Streamlit web app
 st.set_page_config(
     page_title="YouTube Video Analyzer",
@@ -526,10 +486,11 @@ st.set_page_config(
 st.title("YouTube Video Analyzer")
 st.sidebar.header("Select Task")
 
-categories = ["Video Details", "Sentiment Analysis", "Keyword Extraction and Word Cloud", "Named Entity Recognition (NER)", "Summary Generation"]
-task_category = st.sidebar.selectbox("Select Task Category", categories)
+tasks = ["Search Video Details", "Sentiment Analysis", "Profanity Check"]
 
-if task_category == "Video Details":
+task = st.sidebar.selectbox("Task", tasks)
+
+if task == "Search Video Details":
     search_query = st.sidebar.text_input("Enter the topic of interest", value="Python Tutorial")
 
     if st.sidebar.button("Search"):
@@ -545,20 +506,25 @@ if task_category == "Video Details":
                 st.write(f"Channel: {video[7]}")
                 st.write(f"Watch Video: [Link]({video[8]})")
 
-elif task_category == "Sentiment Analysis":
+if task == "Sentiment Analysis":
+    # Provide a valid video ID or update the input method based on your needs
     video_id = st.sidebar.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
 
     if st.sidebar.button("Analyze Sentiment"):
         comments = get_video_comments(video_id)
         st.subheader("Sentiment Analysis")
 
+        # Check if there are comments before analysis
         if comments:
+            # Use the placeholder function for sentiment analysis
             categorized_comments = analyze_and_categorize_comments(comments)
 
+            # Display additional metrics
             st.write(f"Total Comments: {len(comments)}")
             st.write(f"Average Sentiment Polarity: {sum(s[1] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
             st.write(f"Average Sentiment Subjectivity: {sum(s[2] for s in categorized_comments['Positive'] + categorized_comments['Negative']) / len(comments)}")
 
+            # Display sentiment distribution chart
             sentiment_df = []
             for sentiment, sentiment_comments in categorized_comments.items():
                 sentiment_df.extend([(sentiment, comment[1], comment[2]) for comment in sentiment_comments])
@@ -566,25 +532,34 @@ elif task_category == "Sentiment Analysis":
             sentiment_chart = px.scatter(sentiment_df, x=1, y=2, color=0, labels={'1': 'Polarity', '2': 'Subjectivity'}, title='Sentiment Analysis')
             st.plotly_chart(sentiment_chart)
 
+            # Display categorized comments
             for sentiment, sentiment_comments in categorized_comments.items():
                 st.subheader(sentiment)
                 for comment in sentiment_comments:
                     st.write(comment[0])
-
         else:
             st.warning("No comments found for the given video.")
 
-elif task_category == "Keyword Extraction and Word Cloud":
-    if st.sidebar.button("Generate Word Cloud"):
-        comments = get_video_comments(video_id)
-        analyze_and_visualize_keywords(comments)
+if task == "Profanity Check":
+    # Provide a valid video ID or update the input method based on your needs
+    video_id = st.sidebar.text_input("Enter Video ID", value="YOUR_VIDEO_ID")
 
-elif task_category == "Named Entity Recognition (NER)":
-    if st.sidebar.button("Perform NER"):
+    if st.sidebar.button("Check Profanity"):
         comments = get_video_comments(video_id)
-        perform_ner_on_comments(comments)
+        st.subheader("Profanity Check")
 
-elif task_category == "Summary Generation":
-    if st.sidebar.button("Generate Summary"):
-        comments = get_video_comments(video_id)
-        generate_summary(comments)
+        # Check if there are comments before analysis
+        if comments:
+            profanity_predictions = predict(comments)
+
+            # Display profanity predictions
+            st.write(f"Total Comments: {len(comments)}")
+            st.write(f"Profanity Count: {sum(profanity_predictions)}")
+
+            # Display comments with profanity
+            st.subheader("Comments with Profanity")
+            for i, comment in enumerate(comments):
+                if profanity_predictions[i] == 1:
+                    st.write(comment)
+        else:
+            st.warning("No comments found for the given video.")
