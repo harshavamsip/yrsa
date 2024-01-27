@@ -2,7 +2,8 @@ import streamlit as st
 import googleapiclient.discovery
 from textblob import TextBlob
 import plotly.express as px
-import joblib
+from sklearn.externals import joblib
+
 
 
 # # Set your YouTube Data API key here
